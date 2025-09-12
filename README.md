@@ -1,80 +1,99 @@
-# Voice Command Plugin
+# Voice Commands for Figma
 
-A powerful voice command plugin that enables voice-controlled interactions and automation.
+A Figma plugin that enables **hands-free designing** through voice commands. Convert your speech to text, let AI understand your design intent, and execute tasks directly on the Figma canvas.
 
-## Features
+## 🎯 What Makes This Different
 
-- 🎤 Voice recognition and command processing
-- 🔧 Extensible plugin architecture
-- 🚀 Easy integration with existing applications
-- 📱 Cross-platform support
-- 🎯 High accuracy voice detection
+Unlike AI design tools that make decisions for you, this plugin **keeps you in control**. You're still the designer - the AI simply helps translate your voice commands into Figma actions. Perfect for those times when you want to design without constantly reaching for the mouse and keyboard.
 
-## Installation
+## ✨ Features
+
+- 🎤 **Voice Recognition** - Speak your design commands naturally
+- 🤖 **AI Translation** - LLM converts speech to Figma API calls
+- 🎨 **Canvas Integration** - Direct execution on Figma canvas
+- 🚀 **Hands-Free Design** - Design without touching mouse/keyboard
+- ⚡ **Real-time Processing** - Instant command execution
+- 🎯 **Natural Language** - Use everyday language for design tasks
+
+## 🚀 Installation
+
+### For Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/voice-command-plugin.git
+git clone https://github.com/byraman/Voice-Command-Plugin.git
 
 # Navigate to the project directory
-cd voice-command-plugin
+cd Voice-Command-Plugin
 
 # Install dependencies
 npm install
+
+# Build the plugin
+npm run build
 ```
 
-## Usage
+### For Figma
 
-```javascript
-import VoiceCommandPlugin from './voice-command-plugin';
+1. Open Figma Desktop App
+2. Go to Plugins → Development → Import plugin from manifest
+3. Select the `manifest.json` file from this project
+4. The plugin will appear in your plugins list
 
-const voicePlugin = new VoiceCommandPlugin();
+## 🎤 Usage
 
-// Initialize the plugin
-await voicePlugin.initialize();
+1. **Open the Plugin** - Find "Voice Commands for Figma" in your plugins
+2. **Start Listening** - Click the microphone button to begin
+3. **Speak Naturally** - Use commands like:
+   - "Create a rectangle here"
+   - "Make this text bigger"
+   - "Align these elements to the left"
+   - "Change the color to blue"
+   - "Add some padding around this"
 
-// Start listening for voice commands
-voicePlugin.startListening();
+## 🛠️ How It Works
 
-// Register custom commands
-voicePlugin.registerCommand('hello', () => {
-    console.log('Hello! Voice command recognized!');
-});
+1. **Voice Input** → Your speech is captured via Web Speech API
+2. **Text Conversion** → Speech is converted to text
+3. **AI Processing** → LLM understands your design intent
+4. **Figma API** → Commands are translated to Figma API calls
+5. **Canvas Execution** → Actions are performed on your design
+
+## 🎨 Example Commands
+
+- **Shape Creation**: "Add a circle", "Create a rectangle with rounded corners"
+- **Text Operations**: "Make this text bold", "Increase font size to 24px"
+- **Layout**: "Center this element", "Distribute these items evenly"
+- **Styling**: "Change background to #FF5733", "Add a drop shadow"
+- **Organization**: "Group these elements", "Bring to front"
+
+## 🔧 Development
+
+### Prerequisites
+
+- Node.js 16+
+- Figma Desktop App
+- OpenAI API key (for LLM processing)
+
+### Setup
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up your OpenAI API key in the plugin configuration
+4. Build the plugin: `npm run build`
+5. Import the plugin into Figma
+
+### Project Structure
+
+```
+├── code.js          # Main plugin logic
+├── ui.html          # Plugin UI interface
+├── manifest.json    # Figma plugin manifest
+├── package.json     # Dependencies and scripts
+└── README.md        # This file
 ```
 
-## Configuration
-
-The plugin can be configured through a configuration object:
-
-```javascript
-const config = {
-    language: 'en-US',
-    continuous: true,
-    interimResults: false,
-    maxAlternatives: 1
-};
-
-const voicePlugin = new VoiceCommandPlugin(config);
-```
-
-## API Reference
-
-### Methods
-
-- `initialize()` - Initialize the voice recognition system
-- `startListening()` - Begin listening for voice commands
-- `stopListening()` - Stop listening for voice commands
-- `registerCommand(command, callback)` - Register a custom voice command
-- `unregisterCommand(command)` - Remove a registered command
-
-### Events
-
-- `onCommandRecognized` - Fired when a voice command is recognized
-- `onError` - Fired when an error occurs
-- `onListeningStart` - Fired when listening begins
-- `onListeningEnd` - Fired when listening ends
-
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/amazing-feature`)
@@ -82,22 +101,33 @@ const voicePlugin = new VoiceCommandPlugin(config);
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
+## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Support
+## 🐛 Support
 
 If you encounter any issues or have questions, please file an issue on the GitHub repository.
 
-## Roadmap
+## 🗺️ Roadmap
 
-- [ ] Add support for multiple languages
-- [ ] Implement custom wake word detection
-- [ ] Add voice command training capabilities
-- [ ] Create web interface for configuration
-- [ ] Add support for offline voice recognition
+- [ ] **Core Voice Commands** - Basic shape creation and manipulation
+- [ ] **Advanced Commands** - Complex layout and styling operations
+- [ ] **Context Awareness** - Better understanding of selected elements
+- [ ] **Custom Commands** - User-defined voice shortcuts
+- [ ] **Multi-language Support** - Voice recognition in different languages
+- [ ] **Command History** - Undo/redo voice commands
+- [ ] **Batch Operations** - Multiple commands in sequence
+- [ ] **Accessibility Features** - Enhanced support for users with disabilities
+
+## 💡 Use Cases
+
+- **Accessibility** - Design for users with mobility limitations
+- **Multitasking** - Design while taking notes or referencing materials
+- **Ergonomics** - Reduce repetitive mouse/keyboard use
+- **Speed** - Quick design iterations through voice
+- **Hands-free** - Design while standing or in different positions
 
 ---
 
-Made with ❤️ for voice-controlled applications
+Made with ❤️ for hands-free design workflows

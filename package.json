@@ -1,0 +1,35 @@
+{
+  "name": "figma-voice-commands",
+  "version": "1.0.0",
+  "description": "A Figma plugin that enables hands-free designing through voice commands, converting speech to text and executing design tasks on the canvas.",
+  "main": "code.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/byraman/Voice-Command-Plugin.git"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "voice-commands",
+    "hands-free",
+    "design",
+    "accessibility",
+    "voice-control",
+    "ui-design"
+  ],
+  "author": "Raman Subedi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/byraman/Voice-Command-Plugin/issues"
+  },
+  "homepage": "https://github.com/byraman/Voice-Command-Plugin#readme",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.0.0",
+    "typescript": "^5.0.0"
+  }
+}

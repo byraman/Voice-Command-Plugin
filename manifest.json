@@ -11,8 +11,12 @@
     ],
     "networkAccess": {
         "allowedDomains": [
-            "https://api.openai.com"
-        ]
+            "https://console.anthropic.com"
+        ],
+    "devAllowedDomains": [
+      "http://localhost:3000"
+    ],
+        "reasoning": "Voice recognition requires local server for microphone access"
     }
 }
   

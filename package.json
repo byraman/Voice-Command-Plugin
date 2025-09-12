@@ -4,7 +4,10 @@
   "description": "A Figma plugin that enables hands-free designing through voice commands, converting speech to text and executing design tasks on the canvas.",
   "main": "code.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npx esbuild code.ts --bundle --outfile=code.js --platform=node --external:figma --external:__html__",
+    "dev": "npx esbuild code.ts --bundle --outfile=code.js --platform=node --external:figma --external:__html__ --watch",
+    "server": "node simple-server.js",
+    "start": "npm run server",
     "watch": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -29,7 +32,12 @@
   },
   "homepage": "https://github.com/byraman/Voice-Command-Plugin#readme",
   "devDependencies": {
-    "@figma/plugin-typings": "^1.0.0",
-    "typescript": "^5.0.0"
+    "@figma/plugin-typings": "^1.117.0",
+    "esbuild": "^0.25.9",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   }
 }

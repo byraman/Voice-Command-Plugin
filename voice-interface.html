@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Voice Interface - Figma Commands</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .logo {
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .subtitle {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 40px;
+    }
+    .mic-button {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 48px;
+      cursor: pointer;
+      margin: 20px auto;
+      display: block;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+    .mic-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    .mic-button.listening {
+      background: rgba(255, 59, 48, 0.8);
+      animation: pulse 1.5s infinite;
+      border-color: rgba(255, 59, 48, 0.6);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .transcript {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      min-height: 60px;
+      font-size: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .status {
+      font-size: 16px;
+      opacity: 0.9;
+      margin: 20px 0;
+    }
+    .instructions {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 30px;
+      backdrop-filter: blur(10px);
+    }
+    .instructions h3 {
+      margin-top: 0;
+    }
+    .instructions ul {
+      text-align: left;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🎤</div>
+    <div class="subtitle">Voice Commands for Figma</div>
+    
+    <button id="micButton" class="mic-button" title="Click and speak">
+      🎤
+    </button>
+    
+    <div id="status" class="status">Click microphone to start speaking</div>
+    
+    <div id="transcript" class="transcript">
+      Your voice commands will appear here...
+    </div>
+    
+    <div class="instructions">
+      <h3>How to use:</h3>
+      <ul>
+        <li>Click the microphone button</li>
+        <li>Speak your design command clearly</li>
+        <li>Mic auto-pauses after 4 seconds of silence</li>
+        <li>Commands are sent automatically to Figma</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    class VoiceInterface {
+      constructor() {
+        this.isListening = false;
+        this.recognition = null;
+        this.silenceTimer = null;
+        this.setupElements();
+        this.setupEventListeners();
+        this.initializeSpeechRecognition();
+      }
+      
+      setupElements() {
+        this.micButton = document.getElementById('micButton');
+        this.status = document.getElementById('status');
+        this.transcript = document.getElementById('transcript');
+      }
+      
+      setupEventListeners() {
+        this.micButton.addEventListener('click', () => this.toggleListening());
+      }
+      
+      initializeSpeechRecognition() {
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          this.recognition = new SpeechRecognition();
+          
+          this.recognition.continuous = true;
+          this.recognition.interimResults = true;
+          this.recognition.lang = 'en-US';
+          this.recognition.maxAlternatives = 1;
+          
+          this.recognition.onstart = () => {
+            this.isListening = true;
+            this.updateUI();
+            this.updateStatus('Listening... Speak your command');
+            this.startSilenceTimer();
+          };
+          
+          this.recognition.onresult = (event) => {
+            let finalTranscript = '';
+            let interimTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+              const transcript = event.results[i][0].transcript;
+              if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+              } else {
+                interimTranscript += transcript;
+              }
+            }
+            
+            const displayText = finalTranscript || interimTranscript;
+            this.transcript.textContent = displayText;
+            
+            if (finalTranscript) {
+              this.sendCommand(finalTranscript);
+              this.resetSilenceTimer();
+            } else if (interimTranscript.trim().length > 0) {
+              // Only reset timer if there's actual speech content
+              this.resetSilenceTimer();
+            }
+          };
+          
+          this.recognition.onend = () => {
+            console.log('Speech recognition ended');
+            this.isListening = false;
+            this.updateUI();
+            this.updateStatus('Click microphone to start speaking');
+            this.clearSilenceTimer();
+          };
+          
+          this.recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            this.isListening = false;
+            this.updateUI();
+            this.updateStatus('Error: ' + event.error);
+            this.clearSilenceTimer();
+            
+            // Handle specific errors
+            if (event.error === 'not-allowed') {
+              this.updateStatus('Microphone access denied. Please allow microphone access and try again.');
+            } else if (event.error === 'no-speech') {
+              this.updateStatus('No speech detected. Try speaking louder.');
+            } else if (event.error === 'audio-capture') {
+              this.updateStatus('No microphone found. Please check your microphone.');
+            } else if (event.error === 'network') {
+              this.updateStatus('Network error. Voice recognition needs HTTPS. Please try:');
+              this.showHttpsInstructions();
+            }
+          };
+        } else {
+          this.updateStatus('Speech recognition not supported in this browser');
+          this.micButton.disabled = true;
+        }
+      }
+      
+      toggleListening() {
+        console.log('Toggle listening clicked, current state:', this.isListening);
+        if (this.isListening) {
+          console.log('Stopping recognition...');
+          this.recognition.stop();
+        } else {
+          console.log('Starting recognition...');
+          this.startRecognition();
+        }
+      }
+      
+      startRecognition() {
+        try {
+          this.recognition.start();
+        } catch (error) {
+          console.error('Error starting recognition:', error);
+          this.updateStatus('Error starting voice recognition: ' + error.message);
+          // Don't retry automatically, let user click again
+        }
+      }
+      
+      startSilenceTimer() {
+        console.log('Starting silence timer (5 seconds)');
+        this.silenceTimer = setTimeout(() => {
+          if (this.isListening) {
+            console.log('Silence timeout reached, stopping recognition');
+            this.updateStatus('Auto-pausing due to silence...');
+            this.recognition.stop();
+          }
+        }, 5000); // 5 seconds of silence
+      }
+      
+      resetSilenceTimer() {
+        console.log('Resetting silence timer');
+        this.clearSilenceTimer();
+        if (this.isListening) {
+          this.startSilenceTimer();
+        }
+      }
+      
+      clearSilenceTimer() {
+        if (this.silenceTimer) {
+          clearTimeout(this.silenceTimer);
+          this.silenceTimer = null;
+        }
+      }
+      
+      async sendCommand(command) {
+        try {
+          const response = await fetch('http://localhost:3000/api/commands', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ command: command.trim() })
+          });
+          
+          if (response.ok) {
+            this.updateStatus(`Command sent: "${command}"`);
+            this.transcript.textContent = 'Command sent! Speak another command...';
+          }
+        } catch (error) {
+          console.error('Error sending command:', error);
+          this.updateStatus('Error sending command');
+        }
+      }
+      
+      updateUI() {
+        if (this.isListening) {
+          this.micButton.classList.add('listening');
+          this.micButton.textContent = '🔴';
+        } else {
+          this.micButton.classList.remove('listening');
+          this.micButton.textContent = '🎤';
+        }
+      }
+      
+      updateStatus(message) {
+        this.status.textContent = message;
+      }
+      
+      showHttpsInstructions() {
+        const container = document.querySelector('.container');
+        const instructions = document.createElement('div');
+        instructions.innerHTML = `
+          <div style="background: rgba(255, 255, 255, 0.1); padding: 20px; border-radius: 12px; margin: 20px 0; backdrop-filter: blur(10px);">
+            <h4>Voice recognition needs HTTPS</h4>
+            <p>Try one of these solutions:</p>
+            <ol style="text-align: left; margin: 10px 0;">
+              <li>Open Chrome and go to: <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code></li>
+              <li>Add <code>http://localhost:3000</code> to the list</li>
+              <li>Restart Chrome and try again</li>
+            </ol>
+            <p>Or use a different browser that allows localhost voice recognition.</p>
+          </div>
+        `;
+        container.appendChild(instructions);
+      }
+      
+    }
+    
+    // Initialize voice interface
+    const voiceInterface = new VoiceInterface();
+  </script>
+</body>
+</html>

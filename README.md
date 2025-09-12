@@ -73,13 +73,13 @@ npm run build
 
 - Node.js 16+
 - Figma Desktop App
-- OpenAI API key (for LLM processing)
+- Anthropic API key (for Claude LLM processing)
 
 ### Setup
 
 1. Clone the repository
 2. Install dependencies: `npm install`
-3. Set up your OpenAI API key in the plugin configuration
+3. Set up your Anthropic API key in the plugin configuration
 4. Build the plugin: `npm run build`
 5. Import the plugin into Figma
 

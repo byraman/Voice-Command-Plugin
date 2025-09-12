@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Voice Commands for Figma</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 30px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-align: center;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .logo {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      margin-bottom: 30px;
+    }
+    .open-button {
+      width: 100%;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+    .open-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-2px);
+    }
+    .status {
+      margin-top: 20px;
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🎤 Voice Commands</div>
+    <div class="subtitle">Hands-free designing for Figma</div>
+    
+    <button id="openWebpage" class="open-button">
+      Open Voice Interface
+    </button>
+    
+    <div id="status" class="status">Click to open voice recognition in your browser</div>
+  </div>
+
+  <script>
+    console.log('Voice plugin UI loading...');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, setting up interface...');
+      
+      const openButton = document.getElementById('openWebpage');
+      const status = document.getElementById('status');
+      
+      openButton.addEventListener('click', function() {
+        console.log('Opening voice interface...');
+        window.open('http://localhost:3000', '_blank');
+        status.textContent = 'Voice interface opened! Speak your commands.';
+      });
+      
+      // Simple polling for commands
+      setInterval(async function() {
+        try {
+          const response = await fetch('http://localhost:3000/api/commands');
+          const data = await response.json();
+          
+          if (data.command) {
+            console.log('Command received:', data.command);
+            status.textContent = `Executing: ${data.command}`;
+            
+            // Send to Figma
+            parent.postMessage({
+              pluginMessage: {
+                type: 'voice-command',
+                command: data.command
+              }
+            }, '*');
+            
+            // Clear command
+            await fetch('http://localhost:3000/api/commands', { method: 'DELETE' });
+          }
+        } catch (error) {
+          // Server not running, ignore
+        }
+      }, 2000);
+      
+      console.log('Voice plugin UI ready!');
+    });
+  </script>
+</body>
+</html>

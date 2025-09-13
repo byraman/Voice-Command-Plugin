@@ -168,7 +168,11 @@
             this.transcript.textContent = displayText;
             
             if (finalTranscript) {
-              this.sendCommand(finalTranscript);
+              console.log('🎤 Final transcript:', finalTranscript);
+              
+              // Send command to Figma plugin directly
+              this.sendToFigmaPlugin(finalTranscript);
+              
               this.resetSilenceTimer();
             } else if (interimTranscript.trim().length > 0) {
               // Only reset timer if there's actual speech content
@@ -254,6 +258,13 @@
           clearTimeout(this.silenceTimer);
           this.silenceTimer = null;
         }
+      }
+      
+      sendToFigmaPlugin(command) {
+        console.log('📤 Sending to Figma plugin:', command);
+        
+        // Send to the server, which will be picked up by the plugin
+        this.sendCommand(command);
       }
       
       async sendCommand(command) {

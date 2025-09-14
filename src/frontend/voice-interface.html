@@ -85,7 +85,7 @@
         <h1 class="title">🎤 Voice Interface</h1>
         
         <div class="info-message">
-            <strong>This page is used only as a mic source since Figma doesn't support audio input natively.</strong>
+            <strong>The webpage is just used as a mic source since Figma doesn't support audio input natively.</strong>
         </div>
         
         <button id="micButton" class="mic-button">
@@ -118,12 +118,39 @@
             init() {
                 this.setupSpeechRecognition();
                 this.setupMicButton();
+                this.setupMessageListener();
             }
             
             setupMicButton() {
                 this.micButton.addEventListener('click', () => {
                     this.toggleListening();
                 });
+            }
+            
+            setupMessageListener() {
+                window.addEventListener('message', (event) => {
+                    console.log('Message received from Figma plugin:', event.data);
+                    this.handlePluginMessage(event.data);
+                });
+                
+                // Send ready signal to plugin
+                setTimeout(() => {
+                    this.sendToPlugin({ type: 'ready' });
+                }, 1000);
+            }
+            
+            handlePluginMessage(data) {
+                switch (data.type) {
+                    case 'start':
+                        this.startRecognition();
+                        break;
+                    case 'stop':
+                        this.stopRecognition();
+                        break;
+                    case 'ready':
+                        this.updateStatus('Connected to Figma plugin');
+                        break;
+                }
             }
             
             setupSpeechRecognition() {
@@ -242,8 +269,8 @@
             
             async sendCommand(command) {
                 try {
-                    // Use environment-based API URL
-                    const apiUrl = window.API_BASE_URL || 'http://localhost:3000';
+                    // Use Vercel URL
+                    const apiUrl = window.API_BASE_URL || 'https://voice-command-plugin.vercel.app';
                     
                     const response = await fetch(`${apiUrl}/api/commands`, {
                         method: 'POST',
@@ -256,10 +283,23 @@
                     if (response.ok) {
                         this.updateStatus(`Command sent: "${command}"`);
                         this.transcript.textContent = 'Command sent! Waiting for next command...';
+                        
+                        // Also send to plugin via postMessage
+                        this.sendToPlugin({ type: 'transcript', transcript: command.trim() });
                     }
                 } catch (error) {
                     console.error('Error sending command:', error);
                     this.updateStatus('Error sending command');
+                }
+            }
+            
+            sendToPlugin(data) {
+                // Try to send to parent window (Figma plugin)
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage(data, '*');
+                    console.log('✅ Sent to Figma plugin via opener');
+                } else {
+                    console.log('❌ No Figma plugin window available');
                 }
             }
             

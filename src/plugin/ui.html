@@ -20,81 +20,203 @@
       margin-bottom: 30px;
       font-size: 24px;
     }
-    .info-section {
-      text-align: left;
-      margin: 20px 0;
+    
+    .main-card {
+      background: white;
+      border: 1px solid #e1e5e9;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
-    .info-section h2 {
-      font-size: 18px;
-      margin: 0 0 8px 0;
-      color: #000000;
+    .url-section {
+      margin-bottom: 20px;
     }
     
-    .subtitle {
+    .url-label {
       font-size: 14px;
-      color: #666666;
-      margin: 0 0 20px 0;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
     }
     
-    .url-display {
-      background: #f8f9fa;
-      border: 1px solid #e9ecef;
-      border-radius: 6px;
-      padding: 15px;
-      margin: 15px 0;
+    .url-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     
     .url-link {
       color: #007bff;
       text-decoration: none;
       word-break: break-all;
+      font-size: 13px;
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      flex: 1;
+      transition: all 0.2s ease;
     }
     
     .url-link:hover {
-      text-decoration: underline;
+      background: #e9ecef;
+      border-color: #007bff;
+    }
+    
+    .copy-button {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .copy-button:hover {
+      background: #e9ecef;
+      border-color: #007bff;
+    }
+    
+    .copy-button:active {
+      transform: scale(0.95);
+    }
+    
+    .copy-icon, .check-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .copy-icon {
+      opacity: 1;
+      transform: scale(1);
+    }
+    
+    .check-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 0;
+      z-index: 10;
+    }
+    
+    .copy-button.copied .copy-icon {
+      transform: scale(0);
+      opacity: 0;
+    }
+    
+    .copy-button.copied .check-icon {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+    }
+    
+    .copy-button svg {
+      color: #666;
+    }
+    
+    .copy-button:hover svg {
+      color: #007bff;
+    }
+    
+    .copy-button.copied .check-icon svg {
+      color: #28a745;
+    }
+    
+    .chrome-warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 20px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    
+    
+    .chrome-content {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    
+    .chrome-chip {
+      background: #ff6b35;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+      width: fit-content;
+    }
+    
+    .chrome-text {
+      font-size: 13px;
+      color: #856404;
+      line-height: 1.4;
     }
     
     .instructions {
       background: #e7f3ff;
       border: 1px solid #b3d9ff;
-      border-radius: 6px;
-      padding: 15px;
-      margin: 15px 0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
     }
     
     .instructions p {
-      margin: 8px 0;
-      font-size: 13px;
-      color: #333333;
-    }
-    .mic-controls .button {
-      flex: 1;
-      margin-bottom: 0;
+      margin: 0;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🎤 Voice Commands</h1>
-    
-    <div class="info-section">
-      <h2>Voice Commands for Figma</h2>
-      <p class="subtitle">Hands-free designing through voice commands</p>
+    <div class="container">
+      <h1>🎤 Voice Commands</h1>
       
-      <div class="url-display">
-        <strong>Voice Interface:</strong><br>
-        <a href="https://voice-command-plugin.vercel.app/" target="_blank" class="url-link">
-          https://voice-command-plugin.vercel.app/
-        </a>
-      </div>
-      
-      <div class="instructions">
-        <p>🎤 Use the voice interface in your browser to control the microphone and speak commands.</p>
-        <p>🎨 Voice commands will automatically create shapes, text, and frames on your Figma canvas.</p>
+      <div class="main-card">
+        <div class="url-section">
+          <div class="url-label">Voice Interface</div>
+          <div class="url-container">
+            <a href="https://voice-command-plugin.vercel.app/" target="_blank" class="url-link">
+              https://voice-command-plugin.vercel.app/
+            </a>
+            <button id="copyButton" class="copy-button" title="Copy URL">
+              <span class="copy-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+              </span>
+              <span class="check-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20,6 9,17 4,12"></polyline>
+                </svg>
+              </span>
+            </button>
+          </div>
+        </div>
+        
+        <div class="chrome-warning">
+          <div class="chrome-content">
+            <span class="chrome-chip">Chrome Required</span>
+            <span class="chrome-text">Microphone access only works in Chrome browser</span>
+          </div>
+        </div>
+        
+        <div class="instructions">
+          <p>🎤 Click the link above to open the voice interface in Chrome, then speak your design commands.</p>
+        </div>
       </div>
     </div>
-  </div>
 
   <script src="../config.js"></script>
   <script>
@@ -124,6 +246,51 @@
         console.error('Failed to open voice interface. Check popup blockers.');
       }
     }
+
+    // Copy URL functionality
+    function copyUrl() {
+      const url = 'https://voice-command-plugin.vercel.app/';
+      const copyButton = document.getElementById('copyButton');
+      
+      navigator.clipboard.writeText(url).then(() => {
+        // Add copied class for animation
+        console.log('Adding copied class to button');
+        copyButton.classList.add('copied');
+        console.log('Button classes:', copyButton.className);
+        
+      // Reset after 0.5 seconds
+      setTimeout(() => {
+        console.log('Removing copied class from button');
+        copyButton.classList.remove('copied');
+      }, 500);
+      }).catch(err => {
+        console.error('Failed to copy URL:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = url;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        // Still show success animation
+        console.log('Fallback: Adding copied class to button');
+        copyButton.classList.add('copied');
+        console.log('Fallback: Button classes:', copyButton.className);
+        setTimeout(() => {
+          console.log('Fallback: Removing copied class from button');
+          copyButton.classList.remove('copied');
+        }, 500);
+      });
+    }
+
+    // Add event listener when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      const copyButton = document.getElementById('copyButton');
+      if (copyButton) {
+        copyButton.addEventListener('click', copyUrl);
+      }
+    });
 
   </script>
 </body>

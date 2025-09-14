@@ -7,103 +7,111 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       margin: 0;
-      padding: 30px;
-      background: #ffffff;
-      color: #000000;
-      text-align: center;
+      padding: 20px;
+      background: #f8f9fa;
     }
     .container {
-      max-width: 400px;
+      max-width: 500px;
       margin: 0 auto;
     }
-    .logo {
-      font-size: 32px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .subtitle {
-      font-size: 16px;
-      color: #666666;
+    h1 {
+      color: #333;
+      text-align: center;
       margin-bottom: 30px;
+      font-size: 24px;
     }
-    .open-button {
-      width: 100%;
-      padding: 15px;
-      background: #000000;
-      color: #ffffff;
-      border: 2px solid #000000;
+    .button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      padding: 12px 24px;
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
-      font-weight: 600;
-      transition: all 0.3s ease;
+      width: 100%;
+      margin-bottom: 10px;
+      transition: background 0.2s;
     }
-    .open-button:hover {
-      background: #333333;
-      transform: translateY(-2px);
+    .button:hover {
+      background: #0056CC;
+    }
+    .button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .button.stop {
+      background: #FF3B30;
+    }
+    .button.stop:hover {
+      background: #D70015;
     }
     .status {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
       margin-top: 20px;
+      text-align: center;
       font-size: 14px;
-      color: #666666;
+      color: #666;
+    }
+    .transcript {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 10px;
+      min-height: 60px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      color: #333;
+    }
+    .mic-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .mic-controls .button {
+      flex: 1;
+      margin-bottom: 0;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">🎤 Voice Commands</div>
-    <div class="subtitle">Hands-free designing for Figma</div>
+    <h1>🎤 Voice Commands</h1>
     
-    <button id="openWebpage" class="open-button">
-      Open Voice Interface
-    </button>
+    <div id="status" class="status">
+      Voice interface opened. Use the controls in the browser window to start/stop the microphone.
+    </div>
     
-    <div id="status" class="status">Click to open voice recognition in your browser</div>
+    <div id="transcript" class="transcript">
+      Voice commands will appear here...
+    </div>
   </div>
 
+  <script src="../config.js"></script>
   <script>
-    console.log('Voice plugin UI loading...');
-    
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loaded, setting up interface...');
-      
-      const openButton = document.getElementById('openWebpage');
-      const status = document.getElementById('status');
-      
-      openButton.addEventListener('click', function() {
-        console.log('Opening voice interface...');
-        window.open('http://localhost:3000', '_blank');
-        status.textContent = 'Voice interface opened! Speak your commands.';
-      });
-      
-      // Simple polling for commands
-      setInterval(async function() {
-        try {
-          const response = await fetch('http://localhost:3000/api/commands');
-          const data = await response.json();
-          
-          if (data.command) {
-            console.log('Command received:', data.command);
-            status.textContent = `Executing: ${data.command}`;
-            
-            // Send to Figma
-            parent.postMessage({
-              pluginMessage: {
-                type: 'voice-command',
-                command: data.command
-              }
-            }, '*');
-            
-            // Clear command
-            await fetch('http://localhost:3000/api/commands', { method: 'DELETE' });
-          }
-        } catch (error) {
-          // Server not running, ignore
-        }
-      }, 2000);
-      
-      console.log('Voice plugin UI ready!');
+    let voiceWindow = null;
+
+    // Auto-open voice interface when plugin loads
+    window.addEventListener('load', () => {
+      openVoiceInterface();
     });
+
+    function openVoiceInterface() {
+      if (voiceWindow && !voiceWindow.closed) {
+        voiceWindow.focus();
+        return;
+      }
+
+      // Use environment-based API URL
+      const apiUrl = window.API_BASE_URL || 'http://localhost:3000';
+      
+      voiceWindow = window.open(
+        apiUrl,
+        'voiceInterface',
+        'width=400,height=200,scrollbars=no,resizable=no'
+      );
+    }
   </script>
 </body>
 </html>

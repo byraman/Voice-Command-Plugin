@@ -4,10 +4,11 @@
   "description": "A Figma plugin that enables hands-free designing through voice commands, converting speech to text and executing design tasks on the canvas.",
   "main": "code.js",
   "scripts": {
-    "build": "npx esbuild code.ts --bundle --outfile=code.js --platform=node --external:figma --external:__html__",
-    "dev": "npx esbuild code.ts --bundle --outfile=code.js --platform=node --external:figma --external:__html__ --watch",
-    "server": "node simple-server.js",
-    "start": "npm run server",
+    "plugin:build": "npx esbuild src/plugin/code.ts --bundle --outfile=src/plugin/code.js",
+    "plugin:dev": "npx esbuild src/plugin/code.ts --bundle --outfile=src/plugin/code.js --watch",
+    "dev": "node backend/server.js",
+    "start": "node backend/server.js",
+    "build": "echo 'Skipping Figma plugin build on Vercel'",
     "watch": "tsc --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

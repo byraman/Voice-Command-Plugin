@@ -11,7 +11,7 @@
       background: #f8f9fa;
     }
     .container {
-      max-width: 500px;
+      max-width: 500px;                                                                          
       margin: 0 auto;
     }
     h1 {
@@ -79,8 +79,17 @@
   <div class="container">
     <h1>🎤 Voice Commands</h1>
     
+    <div class="mic-controls">
+      <button id="startMicBtn" class="button">
+        🎤 Start Mic
+      </button>
+      <button id="stopMicBtn" class="button stop" disabled>
+        ⏹️ Stop Mic
+      </button>
+    </div>
+    
     <div id="status" class="status">
-      Voice interface opened. Use the controls in the browser window to start/stop the microphone.
+      Voice interface opened. Click "Start Mic" to begin voice commands.
     </div>
     
     <div id="transcript" class="transcript">
@@ -97,21 +106,68 @@
       openVoiceInterface();
     });
 
+    // Add event listeners for mic controls
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('startMicBtn').addEventListener('click', startMic);
+      document.getElementById('stopMicBtn').addEventListener('click', stopMic);
+    });
+
     function openVoiceInterface() {
       if (voiceWindow && !voiceWindow.closed) {
         voiceWindow.focus();
         return;
       }
 
-      // Use environment-based API URL
-      const apiUrl = window.API_BASE_URL || 'http://localhost:3000';
+      // Use Vercel URL
+      const apiUrl = window.API_BASE_URL || 'https://voice-command-plugin.vercel.app';
       
       voiceWindow = window.open(
         apiUrl,
         'voiceInterface',
         'width=400,height=200,scrollbars=no,resizable=no'
       );
+
+      if (voiceWindow) {
+        // Wait for the window to load
+        setTimeout(() => {
+          sendToVoiceWindow({ type: 'ready' });
+        }, 1000);
+      }
     }
+
+    function startMic() {
+      sendToVoiceWindow({ type: 'start' });
+      document.getElementById('startMicBtn').disabled = true;
+      document.getElementById('stopMicBtn').disabled = false;
+      document.getElementById('status').textContent = 'Microphone started - speak your command';
+    }
+
+    function stopMic() {
+      sendToVoiceWindow({ type: 'stop' });
+      document.getElementById('startMicBtn').disabled = false;
+      document.getElementById('stopMicBtn').disabled = true;
+      document.getElementById('status').textContent = 'Microphone stopped';
+    }
+
+    function sendToVoiceWindow(data) {
+      if (voiceWindow && !voiceWindow.closed) {
+        voiceWindow.postMessage(data, 'https://voice-command-plugin.vercel.app');
+      }
+    }
+
+    // Listen for messages from the voice interface
+    window.addEventListener('message', (event) => {
+      // Ensure message is from our voice interface
+      if (event.origin !== 'https://voice-command-plugin.vercel.app') return;
+      
+      if (event.data && event.data.type === 'transcript') {
+        document.getElementById('transcript').textContent = event.data.transcript;
+        document.getElementById('status').textContent = 'Voice command received!';
+        
+        // Forward transcript to plugin code (code.ts)
+        parent.postMessage({ pluginMessage: { type: 'voice-command', command: event.data.transcript } }, '*');
+      }
+    });
   </script>
 </body>
 </html>

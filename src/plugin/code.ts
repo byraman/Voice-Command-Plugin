@@ -3,8 +3,20 @@ figma.showUI(__html__, { width: 400, height: 300 });
 
 console.log('🎤 Voice Commands Plugin loaded!');
 
-// Get API URL from environment or default to localhost
-const API_BASE_URL = (globalThis as any).API_BASE_URL || 'http://localhost:3000';
+// Get API URL from environment or default to Vercel
+const API_BASE_URL = (globalThis as any).API_BASE_URL || 'https://voice-command-plugin.vercel.app';
+
+// Listen for messages from the UI (mic control and incoming transcripts)
+figma.ui.onmessage = (msg) => {
+  console.log('📨 Message received from UI:', msg);
+  
+  if (msg.type === 'voice-command') {
+    console.log('🎯 Processing voice command:', msg.command);
+    
+    // Send to Claude API
+    processVoiceCommand(msg.command);
+  }
+};
 
 // Poll for commands from the voice interface via server
 setInterval(async () => {

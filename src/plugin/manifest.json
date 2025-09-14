@@ -11,12 +11,14 @@
     ],
     "networkAccess": {
         "allowedDomains": [
-            "https://console.anthropic.com"
+            "https://console.anthropic.com",
+            "https://voice-command-plugin.vercel.app"
         ],
-    "devAllowedDomains": [
-      "http://localhost:3000"
-    ],
-        "reasoning": "Voice recognition requires local server for microphone access"
+        "devAllowedDomains": [
+            "http://localhost:3000",
+            "https://voice-command-plugin.vercel.app"
+        ],
+        "reasoning": "Voice recognition requires HTTPS server for microphone access and Claude API calls"
     }
 }
   

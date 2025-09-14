@@ -20,54 +20,53 @@
       margin-bottom: 30px;
       font-size: 24px;
     }
-    .button {
-      background: #007AFF;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      width: 100%;
-      margin-bottom: 10px;
-      transition: background 0.2s;
+    .info-section {
+      text-align: left;
+      margin: 20px 0;
     }
-    .button:hover {
-      background: #0056CC;
+    
+    .info-section h2 {
+      font-size: 18px;
+      margin: 0 0 8px 0;
+      color: #000000;
     }
-    .button:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-    .button.stop {
-      background: #FF3B30;
-    }
-    .button.stop:hover {
-      background: #D70015;
-    }
-    .status {
-      background: #e9ecef;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 20px;
-      text-align: center;
+    
+    .subtitle {
       font-size: 14px;
-      color: #666;
+      color: #666666;
+      margin: 0 0 20px 0;
     }
-    .transcript {
-      background: white;
+    
+    .url-display {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
       padding: 15px;
-      border-radius: 8px;
-      margin-top: 10px;
-      min-height: 60px;
-      border: 1px solid #ddd;
-      font-size: 14px;
-      color: #333;
+      margin: 15px 0;
     }
-    .mic-controls {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+    
+    .url-link {
+      color: #007bff;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    
+    .url-link:hover {
+      text-decoration: underline;
+    }
+    
+    .instructions {
+      background: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+    
+    .instructions p {
+      margin: 8px 0;
+      font-size: 13px;
+      color: #333333;
     }
     .mic-controls .button {
       flex: 1;
@@ -79,21 +78,21 @@
   <div class="container">
     <h1>🎤 Voice Commands</h1>
     
-    <div class="mic-controls">
-      <button id="startMicBtn" class="button">
-        🎤 Start Mic
-      </button>
-      <button id="stopMicBtn" class="button stop" disabled>
-        ⏹️ Stop Mic
-      </button>
-    </div>
-    
-    <div id="status" class="status">
-      Voice interface opened. Click "Start Mic" to begin voice commands.
-    </div>
-    
-    <div id="transcript" class="transcript">
-      Voice commands will appear here...
+    <div class="info-section">
+      <h2>Voice Commands for Figma</h2>
+      <p class="subtitle">Hands-free designing through voice commands</p>
+      
+      <div class="url-display">
+        <strong>Voice Interface:</strong><br>
+        <a href="https://voice-command-plugin.vercel.app/" target="_blank" class="url-link">
+          https://voice-command-plugin.vercel.app/
+        </a>
+      </div>
+      
+      <div class="instructions">
+        <p>🎤 Use the voice interface in your browser to control the microphone and speak commands.</p>
+        <p>🎨 Voice commands will automatically create shapes, text, and frames on your Figma canvas.</p>
+      </div>
     </div>
   </div>
 
@@ -101,16 +100,8 @@
   <script>
     let voiceWindow = null;
 
-    // Auto-open voice interface when plugin loads
-    window.addEventListener('load', () => {
-      openVoiceInterface();
-    });
-
-    // Add event listeners for mic controls
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('startMicBtn').addEventListener('click', startMic);
-      document.getElementById('stopMicBtn').addEventListener('click', stopMic);
-    });
+    // Don't auto-open to prevent permission issues
+    // User must click button to open voice interface
 
     function openVoiceInterface() {
       if (voiceWindow && !voiceWindow.closed) {
@@ -124,50 +115,16 @@
       voiceWindow = window.open(
         apiUrl,
         'voiceInterface',
-        'width=400,height=200,scrollbars=no,resizable=no'
+        'width=500,height=400,scrollbars=yes,resizable=yes'
       );
 
       if (voiceWindow) {
-        // Wait for the window to load
-        setTimeout(() => {
-          sendToVoiceWindow({ type: 'ready' });
-        }, 1000);
+        console.log('Voice interface opened at:', apiUrl);
+      } else {
+        console.error('Failed to open voice interface. Check popup blockers.');
       }
     }
 
-    function startMic() {
-      sendToVoiceWindow({ type: 'start' });
-      document.getElementById('startMicBtn').disabled = true;
-      document.getElementById('stopMicBtn').disabled = false;
-      document.getElementById('status').textContent = 'Microphone started - speak your command';
-    }
-
-    function stopMic() {
-      sendToVoiceWindow({ type: 'stop' });
-      document.getElementById('startMicBtn').disabled = false;
-      document.getElementById('stopMicBtn').disabled = true;
-      document.getElementById('status').textContent = 'Microphone stopped';
-    }
-
-    function sendToVoiceWindow(data) {
-      if (voiceWindow && !voiceWindow.closed) {
-        voiceWindow.postMessage(data, 'https://voice-command-plugin.vercel.app');
-      }
-    }
-
-    // Listen for messages from the voice interface
-    window.addEventListener('message', (event) => {
-      // Ensure message is from our voice interface
-      if (event.origin !== 'https://voice-command-plugin.vercel.app') return;
-      
-      if (event.data && event.data.type === 'transcript') {
-        document.getElementById('transcript').textContent = event.data.transcript;
-        document.getElementById('status').textContent = 'Voice command received!';
-        
-        // Forward transcript to plugin code (code.ts)
-        parent.postMessage({ pluginMessage: { type: 'voice-command', command: event.data.transcript } }, '*');
-      }
-    });
   </script>
 </body>
 </html>

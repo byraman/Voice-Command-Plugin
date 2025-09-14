@@ -73,6 +73,20 @@
             background: #FF3B30;
             animation: pulse 1.5s infinite;
         }
+        .mic-button.stop {
+            background: #FF3B30;
+        }
+        .mic-button.stop:hover {
+            background: #D70015;
+        }
+        .mic-controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .mic-controls .mic-button {
+            flex: 1;
+        }
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -85,12 +99,17 @@
         <h1 class="title">🎤 Voice Interface</h1>
         
         <div class="info-message">
-            <strong>The webpage is just used as a mic source since Figma doesn't support audio input natively.</strong>
+            <strong>This webpage is just used as a mic source since Figma doesn't support audio input natively.</strong>
         </div>
         
-        <button id="micButton" class="mic-button">
-            🎤 Start Listening
-        </button>
+        <div class="mic-controls">
+            <button id="micButton" class="mic-button">
+                🎤 Start Listening
+            </button>
+            <button id="stopButton" class="mic-button stop" disabled>
+                ⏹️ Stop Listening
+            </button>
+        </div>
         
         <div id="transcript" class="transcript">
             Waiting for voice input...
@@ -108,59 +127,71 @@
                 this.isListening = false;
                 this.recognition = null;
                 this.silenceTimer = null;
+                this.retryCount = 0;
+                this.maxRetries = 2; // Reduced retries to prevent browser restrictions
+                this.isInitialized = false;
                 this.micButton = document.getElementById('micButton');
+                this.stopButton = document.getElementById('stopButton');
                 this.transcript = document.getElementById('transcript');
                 this.status = document.getElementById('status');
+                
+                // Force HTTPS-only API URL
+                this.apiUrl = this.getApiUrl();
                 
                 this.init();
             }
             
+            getApiUrl() {
+                // Always use HTTPS in production, allow localhost override via environment
+                const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const useLocalhost = window.USE_LOCALHOST === 'true' || window.USE_LOCALHOST === true;
+                
+                if (isLocalDev && useLocalhost) {
+                    return 'http://localhost:3000';
+                }
+                
+                // Default to Vercel HTTPS URL
+                return window.API_BASE_URL || 'https://voice-command-plugin.vercel.app';
+            }
+            
             init() {
-                this.setupSpeechRecognition();
-                this.setupMicButton();
-                this.setupMessageListener();
+                console.log('🎤 Voice Interface initialized');
+                console.log('🌐 Using API URL:', this.apiUrl);
+                
+                // Only setup buttons, not recognition yet
+                this.setupMicButtons();
+                this.updateStatus('Click "Start Listening" to begin voice recognition');
             }
             
-            setupMicButton() {
+            setupMicButtons() {
                 this.micButton.addEventListener('click', () => {
-                    this.toggleListening();
-                });
-            }
-            
-            setupMessageListener() {
-                window.addEventListener('message', (event) => {
-                    console.log('Message received from Figma plugin:', event.data);
-                    this.handlePluginMessage(event.data);
+                    if (!this.isInitialized) {
+                        this.initializeSpeechRecognition();
+                    }
+                    this.startRecognition();
                 });
                 
-                // Send ready signal to plugin
-                setTimeout(() => {
-                    this.sendToPlugin({ type: 'ready' });
-                }, 1000);
+                this.stopButton.addEventListener('click', () => {
+                    this.stopRecognition();
+                });
             }
             
-            handlePluginMessage(data) {
-                switch (data.type) {
-                    case 'start':
-                        this.startRecognition();
-                        break;
-                    case 'stop':
-                        this.stopRecognition();
-                        break;
-                    case 'ready':
-                        this.updateStatus('Connected to Figma plugin');
-                        break;
+            initializeSpeechRecognition() {
+                // Check HTTPS requirement first
+                if (!this.isSecureContext()) {
+                    this.updateStatus('Voice recognition requires HTTPS. Please access this page via HTTPS.');
+                    return false;
                 }
-            }
-            
-            setupSpeechRecognition() {
+                
                 if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                     this.recognition = new SpeechRecognition();
                     
+                    // Configure SpeechRecognition properly for HTTPS
                     this.recognition.continuous = true;
                     this.recognition.interimResults = true;
                     this.recognition.lang = 'en-US';
+                    this.recognition.maxAlternatives = 1;
                     
                     this.recognition.onstart = () => {
                         console.log('Speech recognition started');
@@ -206,23 +237,44 @@
                     };
                     
                     this.recognition.onerror = (event) => {
-                        console.error('Speech recognition error:', event.error);
+                        console.error('Speech recognition error:', event.error, event);
                         this.isListening = false;
-                        this.updateStatus('Error: ' + event.error);
+                        this.updateUI();
+                        this.clearSilenceTimer();
                         
+                        // Handle different error types - NO AUTO RETRY for most errors
                         if (event.error === 'not-allowed') {
-                            this.updateStatus('Microphone access denied. Please allow microphone access and try again.');
+                            this.updateStatus('Microphone access denied. Please click the microphone icon in your browser address bar and allow microphone access, then try again.');
                         } else if (event.error === 'no-speech') {
-                            this.updateStatus('No speech detected. Please try again.');
+                            this.updateStatus('No speech detected. Click "Start Listening" to try again.');
                         } else if (event.error === 'audio-capture') {
-                            this.updateStatus('No microphone found. Please check your microphone.');
+                            this.updateStatus('No microphone found. Please check your microphone connection and try again.');
                         } else if (event.error === 'network') {
-                            this.updateStatus('Network error. Voice recognition needs HTTPS.');
+                            this.updateStatus('Network error. Please check your internet connection and try again.');
+                            // Only retry network errors with controlled logic
+                            if (this.retryCount < this.maxRetries) {
+                                this.handleNetworkError();
+                            }
+                        } else if (event.error === 'aborted') {
+                            this.updateStatus('Recognition stopped. Click "Start Listening" to try again.');
+                        } else {
+                            this.updateStatus(`Error: ${event.error}. Click "Start Listening" to try again.`);
                         }
                     };
                 } else {
                     this.updateStatus('Speech recognition not supported in this browser');
+                    return false;
                 }
+                
+                this.isInitialized = true;
+                return true;
+            }
+            
+            isSecureContext() {
+                return window.isSecureContext || 
+                       window.location.protocol === 'https:' || 
+                       window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
             }
             
             toggleListening() {
@@ -234,11 +286,37 @@
             }
             
             startRecognition() {
+                if (!this.isInitialized) {
+                    this.updateStatus('Initializing speech recognition...');
+                    return;
+                }
+                
                 if (this.recognition && !this.isListening) {
                     console.log('Starting speech recognition...');
-                    this.recognition.start();
-                    this.resetSilenceTimer();
+                    try {
+                        this.recognition.start();
+                        this.resetSilenceTimer();
+                        this.retryCount = 0; // Reset retry count on successful start
+                    } catch (error) {
+                        console.error('Error starting recognition:', error);
+                        this.updateStatus('Error starting recognition: ' + error.message + '. Click "Start Listening" to try again.');
+                    }
+                } else if (this.isListening) {
+                    this.updateStatus('Already listening. Click "Stop Listening" first.');
                 }
+            }
+            
+            handleNetworkError() {
+                this.retryCount++;
+                console.log(`Retrying recognition (attempt ${this.retryCount}/${this.maxRetries})...`);
+                
+                setTimeout(() => {
+                    if (this.retryCount <= this.maxRetries && !this.isListening) {
+                        this.startRecognition();
+                    } else if (this.retryCount > this.maxRetries) {
+                        this.updateStatus('Max retries reached. Please check your internet connection and try again.');
+                    }
+                }, 3000); // Fixed delay, not exponential
             }
             
             stopRecognition() {
@@ -252,10 +330,10 @@
             resetSilenceTimer() {
                 this.clearSilenceTimer();
                 this.silenceTimer = setTimeout(() => {
-                    console.log('Starting silence timer (5 seconds)');
+                    console.log('Silence detected after 5 seconds, stopping recognition...');
                     if (this.isListening) {
-                        console.log('Silence detected, stopping recognition...');
-                        this.recognition.stop();
+                        this.stopRecognition();
+                        this.updateStatus('Silence detected. Click "Start Listening" to try again.');
                     }
                 }, 5000);
             }
@@ -268,48 +346,46 @@
             }
             
             async sendCommand(command) {
+                // Don't block mic functionality if API fails
                 try {
-                    // Use Vercel URL
-                    const apiUrl = window.API_BASE_URL || 'https://voice-command-plugin.vercel.app';
+                    console.log(`Sending command to: ${this.apiUrl}`);
                     
-                    const response = await fetch(`${apiUrl}/api/commands`, {
+                    const response = await fetch(`${this.apiUrl}/api/commands`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                         },
                         body: JSON.stringify({ transcript: command.trim() })
                     });
                     
                     if (response.ok) {
+                        const result = await response.json();
+                        console.log('Command sent successfully:', result);
                         this.updateStatus(`Command sent: "${command}"`);
                         this.transcript.textContent = 'Command sent! Waiting for next command...';
-                        
-                        // Also send to plugin via postMessage
-                        this.sendToPlugin({ type: 'transcript', transcript: command.trim() });
+                    } else {
+                        console.error('Server error:', response.status, response.statusText);
+                        this.updateStatus(`Command received: "${command}" (Server error: ${response.status})`);
                     }
                 } catch (error) {
                     console.error('Error sending command:', error);
-                    this.updateStatus('Error sending command');
+                    // Don't fail the mic experience if API is down
+                    this.updateStatus(`Command received: "${command}" (Offline mode - server unavailable)`);
+                    this.transcript.textContent = 'Command received! Waiting for next command...';
                 }
             }
             
-            sendToPlugin(data) {
-                // Try to send to parent window (Figma plugin)
-                if (window.opener && !window.opener.closed) {
-                    window.opener.postMessage(data, '*');
-                    console.log('✅ Sent to Figma plugin via opener');
-                } else {
-                    console.log('❌ No Figma plugin window available');
-                }
-            }
             
             updateUI() {
                 if (this.isListening) {
                     this.micButton.classList.add('listening');
-                    this.micButton.textContent = '🔴 Stop Listening';
+                    this.micButton.disabled = true;
+                    this.stopButton.disabled = false;
                 } else {
                     this.micButton.classList.remove('listening');
-                    this.micButton.textContent = '🎤 Start Listening';
+                    this.micButton.disabled = false;
+                    this.stopButton.disabled = true;
                 }
             }
             
@@ -320,6 +396,20 @@
         
         // Initialize the voice interface
         document.addEventListener('DOMContentLoaded', () => {
+            // Check if we're on HTTPS or localhost
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                document.body.innerHTML = `
+                    <div class="container">
+                        <h1 class="title">🔒 HTTPS Required</h1>
+                        <div class="info-message">
+                            <strong>Voice recognition requires HTTPS or localhost.</strong><br>
+                            Please access this page via HTTPS or run it locally.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
             new VoiceInterface();
         });
     </script>

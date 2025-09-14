@@ -6,17 +6,7 @@ console.log('🎤 Voice Commands Plugin loaded!');
 // Get API URL from environment or default to Vercel
 const API_BASE_URL = (globalThis as any).API_BASE_URL || 'https://voice-command-plugin.vercel.app';
 
-// Listen for messages from the UI (mic control and incoming transcripts)
-figma.ui.onmessage = (msg) => {
-  console.log('📨 Message received from UI:', msg);
-  
-  if (msg.type === 'voice-command') {
-    console.log('🎯 Processing voice command:', msg.command);
-    
-    // Send to Claude API
-    processVoiceCommand(msg.command);
-  }
-};
+// Plugin UI is passive - no message handling needed
 
 // Poll for commands from the voice interface via server
 setInterval(async () => {

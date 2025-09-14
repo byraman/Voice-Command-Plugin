@@ -4,13 +4,6 @@
   figma.showUI(__html__, { width: 400, height: 300 });
   console.log("\u{1F3A4} Voice Commands Plugin loaded!");
   var API_BASE_URL = globalThis.API_BASE_URL || "https://voice-command-plugin.vercel.app";
-  figma.ui.onmessage = (msg) => {
-    console.log("\u{1F4E8} Message received from UI:", msg);
-    if (msg.type === "voice-command") {
-      console.log("\u{1F3AF} Processing voice command:", msg.command);
-      processVoiceCommand(msg.command);
-    }
-  };
   setInterval(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/commands`);

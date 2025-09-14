@@ -9,4 +9,7 @@ export const API_BASE_URL = isProduction
 // Export for use in both plugin and frontend
 if (typeof window !== 'undefined') {
   window.API_BASE_URL = API_BASE_URL;
+  
+  // Allow localhost override for development
+  window.USE_LOCALHOST = process.env.USE_LOCALHOST || 'false';
 }

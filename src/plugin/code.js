@@ -1,23 +1,22 @@
 "use strict";
 (() => {
   // src/plugin/code.ts
-  figma.showUI(__html__, { width: 600, height: 300 });
+  figma.showUI(__html__, { width: 400, height: 300 });
   console.log("\u{1F3A4} Voice Commands Plugin loaded!");
-  figma.ui.onmessage = (msg) => {
-    console.log("\u{1F4E8} Message received from UI:", msg);
-    if (msg.type === "voice-command") {
-      console.log("\u{1F3AF} Processing voice command:", msg.command);
-      processVoiceCommand(msg.command);
-    }
-  };
+  var API_BASE_URL = globalThis.API_BASE_URL || "http://localhost:3000";
   setInterval(async () => {
     try {
-      const response = await fetch("http://localhost:3000/api/commands");
+      const response = await fetch(`${API_BASE_URL}/api/commands`);
       const data = await response.json();
       if (data.command) {
         console.log("\u{1F3A4} Voice command received from server:", data.command);
-        processVoiceCommand(data.command);
-        await fetch("http://localhost:3000/api/commands", { method: "DELETE" });
+        if (data.command.actions && Array.isArray(data.command.actions)) {
+          console.log("\u2705 Executing actions:", data.command.actions);
+          executeActions(data.command.actions);
+        } else {
+          processVoiceCommand(data.command);
+        }
+        await fetch(`${API_BASE_URL}/api/commands`, { method: "DELETE" });
       }
     } catch (error) {
     }
@@ -25,7 +24,7 @@
   async function processVoiceCommand(transcript) {
     try {
       console.log("\u{1F680} Sending to Claude API:", transcript);
-      const response = await fetch("http://localhost:3000/api/claude", {
+      const response = await fetch(`${API_BASE_URL}/api/claude`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

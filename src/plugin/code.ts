@@ -1,34 +1,31 @@
 // code.ts - Main Figma plugin logic
-figma.showUI(__html__, { width: 600, height: 300 });
+figma.showUI(__html__, { width: 400, height: 300 });
 
 console.log('🎤 Voice Commands Plugin loaded!');
 
-// Listen for messages from the UI
-figma.ui.onmessage = (msg) => {
-  console.log('📨 Message received from UI:', msg);
-  
-  if (msg.type === 'voice-command') {
-    console.log('🎯 Processing voice command:', msg.command);
-    
-    // Send to Claude API
-    processVoiceCommand(msg.command);
-  }
-};
+// Get API URL from environment or default to localhost
+const API_BASE_URL = (globalThis as any).API_BASE_URL || 'http://localhost:3000';
 
 // Poll for commands from the voice interface via server
 setInterval(async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/commands');
+    const response = await fetch(`${API_BASE_URL}/api/commands`);
     const data = await response.json();
     
     if (data.command) {
       console.log('🎤 Voice command received from server:', data.command);
       
-      // Send to Claude API
-      processVoiceCommand(data.command);
+      // If command has actions, execute them directly
+      if (data.command.actions && Array.isArray(data.command.actions)) {
+        console.log('✅ Executing actions:', data.command.actions);
+        executeActions(data.command.actions);
+      } else {
+        // Send to Claude API for processing
+        processVoiceCommand(data.command);
+      }
       
       // Clear the command after processing
-      await fetch('http://localhost:3000/api/commands', { method: 'DELETE' });
+      await fetch(`${API_BASE_URL}/api/commands`, { method: 'DELETE' });
     }
   } catch (error) {
     // Silently ignore connection errors
@@ -39,7 +36,7 @@ async function processVoiceCommand(transcript: string) {
   try {
     console.log('🚀 Sending to Claude API:', transcript);
     
-    const response = await fetch('http://localhost:3000/api/claude', {
+    const response = await fetch(`${API_BASE_URL}/api/claude`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

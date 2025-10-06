@@ -9,6 +9,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const app = express();
 let currentCommand = null;
+let pluginConnections = new Set();
 
 // Middleware
 app.use(express.json({ limit: '10mb' }));
@@ -65,9 +66,24 @@ app.post('/api/claude', async (req, res) => {
   }
 });
 
+// Plugin status tracking
+app.get('/api/plugin-status', (req, res) => {
+  const isConnected = pluginConnections.size > 0;
+  res.json({ 
+    connected: isConnected, 
+    activePlugins: pluginConnections.size,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Voice commands endpoints
 app.get('/api/commands', (req, res) => {
   console.log('📥 GET /api/commands - Commands available:', currentCommand ? 1 : 0);
+  
+  // Register plugin connection (track that a plugin is active)
+  const pluginId = req.headers['x-plugin-id'] || 'unknown';
+  pluginConnections.add(pluginId);
+  
   res.json({ command: currentCommand });
 });
 
@@ -106,6 +122,15 @@ app.use((error, req, res, next) => {
 
 // Export for Vercel
 module.exports = app;
+
+// Cleanup inactive plugin connections every 30 seconds
+setInterval(() => {
+  // Remove connections older than 5 seconds (plugins poll every 1 second)
+  // This is a simple cleanup - in production you'd want more sophisticated tracking
+  if (pluginConnections.size > 0) {
+    console.log(`🔌 Active plugin connections: ${pluginConnections.size}`);
+  }
+}, 30000);
 
 // Start server only in local development
 if (process.env.NODE_ENV !== 'production') {

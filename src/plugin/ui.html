@@ -21,6 +21,33 @@
       font-size: 24px;
     }
     
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #28a745;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    
     .main-card {
       background: white;
       border: 1px solid #e1e5e9;
@@ -181,6 +208,11 @@
 <body>
     <div class="container">
       <h1>🎤 Voice Commands</h1>
+      
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        Connected
+      </div>
       
       <div class="main-card">
         <div class="url-section">

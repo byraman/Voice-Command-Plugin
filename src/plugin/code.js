@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/plugin/code.ts
-  figma.showUI(__html__, { width: 400, height: 300 });
+  figma.showUI(__html__, { width: 500, height: 300 });
   console.log("\u{1F3A4} Voice Commands Plugin loaded!");
   var API_BASE_URL = globalThis.API_BASE_URL || "https://voice-command-plugin.vercel.app";
   setInterval(async () => {
@@ -58,8 +58,10 @@
     figma.notify(`Executed ${actions.length} actions on canvas!`);
   }
   function executeAction(action) {
-    const { op, args = {}, target } = action;
-    switch (op) {
+    const { op, action: actionName, args = {}, target } = action;
+    const command = op || actionName;
+    console.log(`\u{1F3AF} Executing command: ${command}`, { args, target });
+    switch (command) {
       // CREATE SHAPES
       case "create_rectangle":
         const rect = figma.createRectangle();
@@ -129,12 +131,22 @@
         const text = figma.createText();
         text.x = args.x || 100;
         text.y = args.y || 100;
-        text.characters = args.text || "Hello";
-        if (args.fontSize) text.fontSize = args.fontSize;
-        if (args.color) text.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
-        if (args.name) text.name = args.name;
-        figma.currentPage.appendChild(text);
-        console.log("\u2705 Text created");
+        figma.loadFontAsync({ family: "Inter", style: "Regular" }).then(() => {
+          text.characters = args.text || "Hello";
+          if (args.fontSize) text.fontSize = args.fontSize;
+          if (args.color) text.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
+          if (args.name) text.name = args.name;
+          text.textAutoResize = "WIDTH_AND_HEIGHT";
+          figma.currentPage.appendChild(text);
+          console.log("\u2705 Text created with proper sizing");
+        }).catch((error) => {
+          console.error("\u274C Font loading failed:", error);
+          text.characters = args.text || "Hello";
+          if (args.fontSize) text.fontSize = args.fontSize;
+          if (args.color) text.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
+          if (args.name) text.name = args.name;
+          figma.currentPage.appendChild(text);
+        });
         break;
       // FRAMES
       case "create_frame":
@@ -156,6 +168,18 @@
             node.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
             console.log("\u2705 Fill set");
           }
+        } else {
+          const selectedNodes = figma.currentPage.selection;
+          if (selectedNodes.length > 0) {
+            selectedNodes.forEach((node) => {
+              if ("fills" in node) {
+                node.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
+              }
+            });
+            console.log(`\u2705 Fill set on ${selectedNodes.length} selected objects`);
+          } else {
+            console.log("\u274C No objects selected");
+          }
         }
         break;
       case "set_stroke":
@@ -166,6 +190,19 @@
             if (args.strokeWeight) node.strokeWeight = args.strokeWeight;
             console.log("\u2705 Stroke set");
           }
+        } else {
+          const selectedNodes = figma.currentPage.selection;
+          if (selectedNodes.length > 0) {
+            selectedNodes.forEach((node) => {
+              if ("strokes" in node) {
+                node.strokes = [{ type: "SOLID", color: hexToRgb(args.color) }];
+                if (args.strokeWeight) node.strokeWeight = args.strokeWeight;
+              }
+            });
+            console.log(`\u2705 Stroke set on ${selectedNodes.length} selected objects`);
+          } else {
+            console.log("\u274C No objects selected");
+          }
         }
         break;
       case "set_opacity":
@@ -174,6 +211,18 @@
           if (node && "opacity" in node) {
             node.opacity = args.opacity;
             console.log("\u2705 Opacity set");
+          }
+        } else {
+          const selectedNodes = figma.currentPage.selection;
+          if (selectedNodes.length > 0) {
+            selectedNodes.forEach((node) => {
+              if ("opacity" in node) {
+                node.opacity = args.opacity;
+              }
+            });
+            console.log(`\u2705 Opacity set on ${selectedNodes.length} selected objects`);
+          } else {
+            console.log("\u274C No objects selected");
           }
         }
         break;
@@ -217,14 +266,65 @@
           }
         }
         break;
+      case "find_by_name":
+        const searchName = args.name || "";
+        console.log(`\u{1F50D} Searching for objects with name containing: "${searchName}"`);
+        const allNodes = figma.currentPage.findAll();
+        console.log(`\u{1F4CA} Total objects on canvas: ${allNodes.length}`);
+        const matchingNodes = allNodes.filter(
+          (node) => node.name && node.name.toLowerCase().includes(searchName.toLowerCase())
+        ).sort((a, b) => {
+          const aName = a.name.toLowerCase();
+          const bName = b.name.toLowerCase();
+          const search = searchName.toLowerCase();
+          if (aName === search) return -1;
+          if (bName === search) return 1;
+          if (aName.startsWith(search) && !bName.startsWith(search)) return -1;
+          if (bName.startsWith(search) && !aName.startsWith(search)) return 1;
+          return aName.length - bName.length;
+        });
+        console.log(`\u{1F3AF} Found ${matchingNodes.length} matching objects`);
+        if (matchingNodes.length > 0) {
+          const selectedNode = matchingNodes[0];
+          figma.currentPage.selection = [selectedNode];
+          figma.viewport.scrollAndZoomIntoView([selectedNode]);
+          console.log(`\u2705 Found and selected: "${selectedNode.name}" (${matchingNodes.length} matches found)`);
+          globalThis.lastSelectedNodeId = selectedNode.id;
+          figma.notify(`Found and selected: ${selectedNode.name}`);
+        } else {
+          console.log(`\u274C No objects found matching: "${searchName}"`);
+          const availableNames = allNodes.map((node) => node.name).filter((name) => name).slice(0, 10);
+          console.log(`Available object names: ${availableNames.join(", ")}${availableNames.length === 10 ? "..." : ""}`);
+          figma.notify(`No objects found matching "${searchName}"`);
+        }
+        break;
+      case "select_last":
+        const lastSelectedId = globalThis.lastSelectedNodeId;
+        if (lastSelectedId) {
+          const node = findNodeById(lastSelectedId);
+          if (node) {
+            figma.currentPage.selection = [node];
+            figma.viewport.scrollAndZoomIntoView([node]);
+            console.log("\u2705 Last selected node reselected");
+          }
+        }
+        break;
       case "select_all":
-        const allNodes = figma.currentPage.children;
-        figma.currentPage.selection = allNodes;
-        console.log("\u2705 All nodes selected");
+        const allPageNodes = figma.currentPage.children;
+        figma.currentPage.selection = allPageNodes;
+        console.log(`\u2705 All ${allPageNodes.length} top-level nodes selected`);
         break;
       case "deselect":
         figma.currentPage.selection = [];
         console.log("\u2705 Selection cleared");
+        break;
+      case "list_objects":
+        const allObjects = figma.currentPage.findAll();
+        const objectNames = allObjects.map((node) => node.name).filter((name) => name);
+        console.log(`\u{1F4CB} Available objects (${objectNames.length}):`);
+        objectNames.forEach((name, index) => {
+          console.log(`  ${index + 1}. "${name}"`);
+        });
         break;
       // LAYERS
       case "bring_to_front":

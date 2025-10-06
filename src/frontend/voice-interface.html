@@ -46,6 +46,40 @@
             font-size: 14px;
             margin: 10px 0;
         }
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        .status-dot.connected {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
         .mic-button {
             background: #007AFF;
             color: white;
@@ -96,7 +130,12 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="title">🎤 Voice Interface</h1>
+        <h1 class="title"> Voice Interface</h1>
+        
+        <div id="connectionStatus" class="connection-status disconnected">
+            <div class="status-dot"></div>
+            <span id="statusText">Checking connection...</span>
+        </div>
         
         <div class="info-message">
             <strong>This webpage is just used as a mic source since Figma doesn't support audio input natively.</strong>
@@ -104,10 +143,10 @@
         
         <div class="mic-controls">
             <button id="micButton" class="mic-button">
-                🎤 Start Listening
+                 Start Listening
             </button>
             <button id="stopButton" class="mic-button stop" disabled>
-                ⏹️ Stop Listening
+                 Stop Listening
             </button>
         </div>
         
@@ -134,11 +173,14 @@
                 this.stopButton = document.getElementById('stopButton');
                 this.transcript = document.getElementById('transcript');
                 this.status = document.getElementById('status');
+                this.connectionStatus = document.getElementById('connectionStatus');
+                this.statusText = document.getElementById('statusText');
                 
                 // Force HTTPS-only API URL
                 this.apiUrl = this.getApiUrl();
                 
                 this.init();
+                this.startConnectionCheck();
             }
             
             getApiUrl() {
@@ -154,9 +196,46 @@
                 return window.API_BASE_URL || 'https://voice-command-plugin.vercel.app';
             }
             
+            async startConnectionCheck() {
+                // Check connection status every 3 seconds
+                setInterval(() => {
+                    this.checkConnection();
+                }, 3000);
+                
+                // Initial check
+                this.checkConnection();
+            }
+            
+            async checkConnection() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/plugin-status`);
+                    const data = await response.json();
+                    
+                    if (data.connected) {
+                        this.updateConnectionStatus(true, `Connected (${data.activePlugins} plugin${data.activePlugins !== 1 ? 's' : ''})`);
+                    } else {
+                        this.updateConnectionStatus(false, 'Disconnected - Start Figma plugin');
+                    }
+                } catch (error) {
+                    this.updateConnectionStatus(false, 'Disconnected - Server unreachable');
+                }
+            }
+            
+            updateConnectionStatus(connected, text) {
+                this.connectionStatus.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
+                this.statusText.textContent = text;
+                
+                const dot = this.connectionStatus.querySelector('.status-dot');
+                if (connected) {
+                    dot.classList.add('connected');
+                } else {
+                    dot.classList.remove('connected');
+                }
+            }
+            
             init() {
-                console.log('🎤 Voice Interface initialized');
-                console.log('🌐 Using API URL:', this.apiUrl);
+                console.log('Voice Interface initialized');
+                console.log('Using API URL:', this.apiUrl);
                 
                 // Only setup buttons, not recognition yet
                 this.setupMicButtons();

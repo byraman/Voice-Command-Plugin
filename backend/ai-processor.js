@@ -17,7 +17,7 @@ Available Actions:
 - CREATE: create_rectangle, create_circle, create_ellipse, create_line, create_polygon, create_star, create_text, create_frame
 - STYLE: set_fill, set_stroke, set_opacity
 - TRANSFORM: move, resize, rotate
-- SELECT: select, select_all, deselect
+- SELECT: select, select_all, deselect, find_by_name, select_last, list_objects
 - LAYER: bring_to_front, send_to_back
 - DELETE: delete, delete_selection
 - GROUP: group, ungroup
@@ -43,6 +43,9 @@ Schema:
     {"op":"select","target":"nodeId"},
     {"op":"select_all"},
     {"op":"deselect"},
+    {"op":"find_by_name","args":{"name":"string"}},
+    {"op":"select_last"},
+    {"op":"list_objects"},
     {"op":"bring_to_front","target":"nodeId"},
     {"op":"send_to_back","target":"nodeId"},
     {"op":"delete","target":"nodeId"},
@@ -63,6 +66,13 @@ Rules:
 - For colors, use hex format like "#FF0000" for red.
 - For text, use the exact words spoken.
 - For selection operations, use "select_all" or "deselect" instead of targeting specific nodes.
+- For finding objects by name, use "find_by_name" with the name in args.name.
+- For listing all objects, use "list_objects".
+- For reselecting the last found object, use "select_last".
+- Examples: "find version 3" -> {"op":"find_by_name","args":{"name":"version 3"}}
+- Examples: "find red frame" -> {"op":"find_by_name","args":{"name":"red frame"}}
+- Examples: "select all" -> {"op":"select_all"}
+- Examples: "list objects" -> {"op":"list_objects"}
 
 Now process this command:
 ${transcript}

@@ -140,3 +140,4 @@ if (process.env.NODE_ENV !== 'production') {
     console.log('📱 Open this URL in your browser for voice interface');
   });
 }
+// CORS fix applied

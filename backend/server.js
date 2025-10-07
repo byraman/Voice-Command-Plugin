@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { callClaude } = require('./ai-processor');
+const { callOpenAI } = require('./ai-processor');
 
 // Only load dotenv in local development
 if (process.env.NODE_ENV !== 'production') {
@@ -48,15 +48,15 @@ app.post('/api/claude', async (req, res) => {
       return res.status(400).json({ error: 'Transcript too long' });
     }
     
-    // Call Claude API to process the transcript
+    // Call OpenAI API to process the transcript
     try {
-      console.log('🤖 Calling Claude with transcript:', transcript);
-      const claudeResponse = await callClaude(transcript);
-      console.log('✅ Claude response received:', claudeResponse);
+      console.log('🤖 Calling OpenAI with transcript:', transcript);
+      const openaiResponse = await callOpenAI(transcript);
+      console.log('✅ OpenAI response received:', openaiResponse);
       
-      res.json(claudeResponse);
+      res.json(openaiResponse);
     } catch (error) {
-      console.error('❌ Error calling Claude:', error);
+      console.error('❌ Error calling OpenAI:', error);
       res.status(500).json({ error: 'Failed to process command with AI' });
     }
     

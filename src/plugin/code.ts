@@ -24,7 +24,7 @@ setInterval(async () => {
       if (data.command.actions && Array.isArray(data.command.actions)) {
         executeActions(data.command.actions);
       } else {
-        // Send to Claude API for processing
+        // Send to OpenAI API for processing
         processVoiceCommand(data.command);
       }
       

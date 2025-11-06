@@ -2,16 +2,18 @@
 (() => {
   // src/plugin/code.ts
   figma.showUI(__html__, { width: 500, height: 300 });
-  console.log("\u{1F3A4} Voice Commands Plugin loaded!");
   var API_BASE_URL = globalThis.API_BASE_URL || "https://voice-command-plugin.vercel.app";
+  var PLUGIN_ID = `plugin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   setInterval(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/commands`);
+      const response = await fetch(`${API_BASE_URL}/api/commands`, {
+        headers: {
+          "X-Plugin-ID": PLUGIN_ID
+        }
+      });
       const data = await response.json();
       if (data.command) {
-        console.log("\u{1F3A4} Voice command received from server:", data.command);
         if (data.command.actions && Array.isArray(data.command.actions)) {
-          console.log("\u2705 Executing actions:", data.command.actions);
           executeActions(data.command.actions);
         } else {
           processVoiceCommand(data.command);
@@ -23,7 +25,6 @@
   }, 1e3);
   async function processVoiceCommand(transcript) {
     try {
-      console.log("\u{1F680} Sending to Claude API:", transcript);
       const response = await fetch(`${API_BASE_URL}/api/claude`, {
         method: "POST",
         headers: {
@@ -31,13 +32,21 @@
         },
         body: JSON.stringify({ transcript })
       });
+      if (response.status === 429) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || "Rate limit exceeded. Please wait before trying again.";
+        figma.notify(errorMessage);
+        return;
+      }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        figma.notify(errorData.error || `Server error: ${response.status}`);
+        return;
+      }
       const data = await response.json();
-      console.log("\u{1F916} Claude response:", data);
       if (data.actions && data.actions.length > 0) {
-        console.log("\u2705 Executing actions:", data.actions);
         executeActions(data.actions);
       } else {
-        console.log("\u274C No actions in response");
         figma.notify("No actions generated from command");
       }
     } catch (error) {
@@ -46,9 +55,7 @@
     }
   }
   function executeActions(actions) {
-    console.log("\u{1F3A8} Executing actions on canvas:", actions);
     actions.forEach((action, index) => {
-      console.log(`Action ${index + 1}:`, action);
       try {
         executeAction(action);
       } catch (error) {
@@ -60,7 +67,6 @@
   function executeAction(action) {
     const { op, action: actionName, args = {}, target } = action;
     const command = op || actionName;
-    console.log(`\u{1F3AF} Executing command: ${command}`, { args, target });
     switch (command) {
       // CREATE SHAPES
       case "create_rectangle":
@@ -71,8 +77,7 @@
         if (args.color) rect.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.borderRadius) rect.cornerRadius = args.borderRadius;
         if (args.name) rect.name = args.name;
-        figma.currentPage.appendChild(rect);
-        console.log("\u2705 Rectangle created");
+        appendToParent(rect, args.parentId);
         break;
       case "create_circle":
         const circle = figma.createEllipse();
@@ -82,8 +87,7 @@
         circle.resize(radius * 2, radius * 2);
         if (args.color) circle.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) circle.name = args.name;
-        figma.currentPage.appendChild(circle);
-        console.log("\u2705 Circle created");
+        appendToParent(circle, args.parentId);
         break;
       case "create_ellipse":
         const ellipse = figma.createEllipse();
@@ -92,8 +96,7 @@
         ellipse.resize(args.width || 100, args.height || 100);
         if (args.color) ellipse.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) ellipse.name = args.name;
-        figma.currentPage.appendChild(ellipse);
-        console.log("\u2705 Ellipse created");
+        appendToParent(ellipse, args.parentId);
         break;
       case "create_line":
         const line = figma.createLine();
@@ -103,8 +106,7 @@
         if (args.color) line.strokes = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.strokeWeight) line.strokeWeight = args.strokeWeight;
         if (args.name) line.name = args.name;
-        figma.currentPage.appendChild(line);
-        console.log("\u2705 Line created");
+        appendToParent(line, args.parentId);
         break;
       case "create_polygon":
         const polygon = figma.createPolygon();
@@ -113,8 +115,7 @@
         polygon.resize(args.width || 100, args.height || 100);
         if (args.color) polygon.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) polygon.name = args.name;
-        figma.currentPage.appendChild(polygon);
-        console.log("\u2705 Polygon created");
+        appendToParent(polygon, args.parentId);
         break;
       case "create_star":
         const star = figma.createStar();
@@ -123,8 +124,7 @@
         star.resize(args.width || 100, args.height || 100);
         if (args.color) star.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) star.name = args.name;
-        figma.currentPage.appendChild(star);
-        console.log("\u2705 Star created");
+        appendToParent(star, args.parentId);
         break;
       // TEXT
       case "create_text":
@@ -137,15 +137,14 @@
           if (args.color) text.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
           if (args.name) text.name = args.name;
           text.textAutoResize = "WIDTH_AND_HEIGHT";
-          figma.currentPage.appendChild(text);
-          console.log("\u2705 Text created with proper sizing");
+          appendToParent(text, args.parentId);
         }).catch((error) => {
           console.error("\u274C Font loading failed:", error);
           text.characters = args.text || "Hello";
           if (args.fontSize) text.fontSize = args.fontSize;
           if (args.color) text.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
           if (args.name) text.name = args.name;
-          figma.currentPage.appendChild(text);
+          appendToParent(text, args.parentId);
         });
         break;
       // FRAMES
@@ -157,8 +156,7 @@
         if (args.color) frame.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.borderRadius) frame.cornerRadius = args.borderRadius;
         if (args.name) frame.name = args.name;
-        figma.currentPage.appendChild(frame);
-        console.log("\u2705 Frame created");
+        appendToParent(frame, args.parentId);
         break;
       // STYLING
       case "set_fill":
@@ -166,7 +164,6 @@
           const node = findNodeById(target);
           if (node && "fills" in node) {
             node.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
-            console.log("\u2705 Fill set");
           }
         } else {
           const selectedNodes = figma.currentPage.selection;
@@ -176,9 +173,6 @@
                 node.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
               }
             });
-            console.log(`\u2705 Fill set on ${selectedNodes.length} selected objects`);
-          } else {
-            console.log("\u274C No objects selected");
           }
         }
         break;
@@ -188,7 +182,6 @@
           if (node && "strokes" in node) {
             node.strokes = [{ type: "SOLID", color: hexToRgb(args.color) }];
             if (args.strokeWeight) node.strokeWeight = args.strokeWeight;
-            console.log("\u2705 Stroke set");
           }
         } else {
           const selectedNodes = figma.currentPage.selection;
@@ -199,9 +192,6 @@
                 if (args.strokeWeight) node.strokeWeight = args.strokeWeight;
               }
             });
-            console.log(`\u2705 Stroke set on ${selectedNodes.length} selected objects`);
-          } else {
-            console.log("\u274C No objects selected");
           }
         }
         break;
@@ -210,7 +200,6 @@
           const node = findNodeById(target);
           if (node && "opacity" in node) {
             node.opacity = args.opacity;
-            console.log("\u2705 Opacity set");
           }
         } else {
           const selectedNodes = figma.currentPage.selection;
@@ -220,9 +209,6 @@
                 node.opacity = args.opacity;
               }
             });
-            console.log(`\u2705 Opacity set on ${selectedNodes.length} selected objects`);
-          } else {
-            console.log("\u274C No objects selected");
           }
         }
         break;
@@ -233,7 +219,6 @@
           if (node) {
             node.x = args.x || node.x;
             node.y = args.y || node.y;
-            console.log("\u2705 Node moved");
           }
         }
         break;
@@ -242,7 +227,6 @@
           const node = findNodeById(target);
           if (node && "resize" in node) {
             node.resize(args.width || node.width, args.height || node.height);
-            console.log("\u2705 Node resized");
           }
         }
         break;
@@ -251,7 +235,6 @@
           const node = findNodeById(target);
           if (node && "rotation" in node) {
             node.rotation = args.rotation || 0;
-            console.log("\u2705 Node rotated");
           }
         }
         break;
@@ -262,15 +245,30 @@
           if (node) {
             figma.currentPage.selection = [node];
             figma.viewport.scrollAndZoomIntoView([node]);
-            console.log("\u2705 Node selected");
+          } else {
+            figma.notify("No matching layers found with the specified name.");
+          }
+        } else {
+          const searchName2 = args.name || "";
+          const allNodes2 = figma.currentPage.findAll();
+          const matchingNodes2 = allNodes2.filter(
+            (node) => node.name && node.name.toLowerCase().includes(searchName2.toLowerCase())
+          );
+          if (matchingNodes2.length === 0) {
+            figma.notify("No matching layers found with the specified name.");
+          } else if (matchingNodes2.length > 1) {
+            figma.currentPage.selection = matchingNodes2;
+            figma.viewport.scrollAndZoomIntoView(matchingNodes2);
+            figma.notify(`Selected ${matchingNodes2.length} layers named '${searchName2}'.`);
+          } else {
+            figma.currentPage.selection = [matchingNodes2[0]];
+            figma.viewport.scrollAndZoomIntoView([matchingNodes2[0]]);
           }
         }
         break;
       case "find_by_name":
         const searchName = args.name || "";
-        console.log(`\u{1F50D} Searching for objects with name containing: "${searchName}"`);
         const allNodes = figma.currentPage.findAll();
-        console.log(`\u{1F4CA} Total objects on canvas: ${allNodes.length}`);
         const matchingNodes = allNodes.filter(
           (node) => node.name && node.name.toLowerCase().includes(searchName.toLowerCase())
         ).sort((a, b) => {
@@ -283,18 +281,13 @@
           if (bName.startsWith(search) && !aName.startsWith(search)) return 1;
           return aName.length - bName.length;
         });
-        console.log(`\u{1F3AF} Found ${matchingNodes.length} matching objects`);
         if (matchingNodes.length > 0) {
           const selectedNode = matchingNodes[0];
           figma.currentPage.selection = [selectedNode];
           figma.viewport.scrollAndZoomIntoView([selectedNode]);
-          console.log(`\u2705 Found and selected: "${selectedNode.name}" (${matchingNodes.length} matches found)`);
           globalThis.lastSelectedNodeId = selectedNode.id;
           figma.notify(`Found and selected: ${selectedNode.name}`);
         } else {
-          console.log(`\u274C No objects found matching: "${searchName}"`);
-          const availableNames = allNodes.map((node) => node.name).filter((name) => name).slice(0, 10);
-          console.log(`Available object names: ${availableNames.join(", ")}${availableNames.length === 10 ? "..." : ""}`);
           figma.notify(`No objects found matching "${searchName}"`);
         }
         break;
@@ -305,23 +298,20 @@
           if (node) {
             figma.currentPage.selection = [node];
             figma.viewport.scrollAndZoomIntoView([node]);
-            console.log("\u2705 Last selected node reselected");
           }
         }
         break;
       case "select_all":
         const allPageNodes = figma.currentPage.children;
         figma.currentPage.selection = allPageNodes;
-        console.log(`\u2705 All ${allPageNodes.length} top-level nodes selected`);
         break;
       case "deselect":
         figma.currentPage.selection = [];
-        console.log("\u2705 Selection cleared");
         break;
       case "list_objects":
         const allObjects = figma.currentPage.findAll();
         const objectNames = allObjects.map((node) => node.name).filter((name) => name);
-        console.log(`\u{1F4CB} Available objects (${objectNames.length}):`);
+        console.log(`Available objects (${objectNames.length}):`);
         objectNames.forEach((name, index) => {
           console.log(`  ${index + 1}. "${name}"`);
         });
@@ -332,7 +322,6 @@
           const node = findNodeById(target);
           if (node) {
             figma.currentPage.appendChild(node);
-            console.log("\u2705 Brought to front");
           }
         }
         break;
@@ -341,7 +330,6 @@
           const node = findNodeById(target);
           if (node) {
             figma.currentPage.insertChild(0, node);
-            console.log("\u2705 Sent to back");
           }
         }
         break;
@@ -351,53 +339,89 @@
           const node = findNodeById(target);
           if (node) {
             node.remove();
-            console.log("\u2705 Node deleted");
           }
         }
         break;
       case "delete_selection":
         figma.currentPage.selection.forEach((node) => node.remove());
-        console.log("\u2705 Selection deleted");
         break;
       // GROUP/UNGROUP
       case "group":
         if (figma.currentPage.selection.length > 1) {
           const group = figma.group(figma.currentPage.selection, figma.currentPage);
           if (args.name) group.name = args.name;
-          console.log("\u2705 Grouped");
         }
         break;
       case "ungroup":
         const groups = figma.currentPage.selection.filter((node) => node.type === "GROUP");
         groups.forEach((group) => figma.ungroup(group));
-        console.log("\u2705 Ungrouped");
         break;
       // ZOOM
       case "zoom_to_fit":
         figma.viewport.scrollAndZoomIntoView(figma.currentPage.children);
-        console.log("\u2705 Zoomed to fit");
         break;
       case "zoom_to_selection":
         if (figma.currentPage.selection.length > 0) {
           figma.viewport.scrollAndZoomIntoView(figma.currentPage.selection);
-          console.log("\u2705 Zoomed to selection");
         }
         break;
       default:
-        console.log("\u274C Unknown action:", op);
+        console.log("Unknown action:", op);
         figma.notify(`Unknown action: ${op}`);
     }
   }
   function findNodeById(id) {
     if (!id || typeof id !== "string") {
-      console.warn("Invalid node ID:", id);
       return null;
     }
     return figma.currentPage.findOne((node) => node.id === id);
   }
+  function findNodesByName(name) {
+    if (!name || typeof name !== "string") {
+      return [];
+    }
+    const allNodes = figma.currentPage.findAll();
+    return allNodes.filter(
+      (node) => node.name && node.name.toLowerCase().includes(name.toLowerCase())
+    );
+  }
+  function findParentNode(parentId) {
+    if (!parentId) return null;
+    const byId = findNodeById(parentId);
+    if (byId) return byId;
+    const byName = findNodesByName(parentId);
+    return byName.length > 0 ? byName : null;
+  }
+  function appendToParent(node, parentId) {
+    if (!parentId) {
+      figma.currentPage.appendChild(node);
+      return;
+    }
+    const parent = findParentNode(parentId);
+    if (parent) {
+      if (Array.isArray(parent)) {
+        parent.forEach((p) => {
+          if ("appendChild" in p) {
+            p.appendChild(node.clone());
+          } else {
+            figma.currentPage.appendChild(node.clone());
+          }
+        });
+        figma.notify(`Added element inside ${parent.length} parents named '${parentId}'.`);
+      } else {
+        if ("appendChild" in parent) {
+          parent.appendChild(node);
+        } else {
+          figma.currentPage.appendChild(node);
+        }
+      }
+    } else {
+      figma.currentPage.appendChild(node);
+      figma.notify("Parent not found, created at root instead.");
+    }
+  }
   function hexToRgb(hex) {
     if (!hex || typeof hex !== "string") {
-      console.warn("Invalid hex color:", hex);
       return { r: 0, g: 0, b: 0 };
     }
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);

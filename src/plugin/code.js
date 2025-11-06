@@ -2,27 +2,49 @@
 (() => {
   // src/plugin/code.ts
   figma.showUI(__html__, { width: 500, height: 300 });
-  var API_BASE_URL = globalThis.API_BASE_URL || "https://voice-command-plugin.vercel.app";
-  var PLUGIN_ID = `plugin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  setInterval(async () => {
+  console.log("Voice Commands Plugin loaded");
+  async function detectApiUrl() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/commands`, {
-        headers: {
-          "X-Plugin-ID": PLUGIN_ID
-        }
+      const localhostUrl = "http://localhost:3000";
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1e3);
+      const response = await fetch(`${localhostUrl}/api/health`, {
+        method: "GET",
+        signal: controller.signal
       });
-      const data = await response.json();
-      if (data.command) {
-        if (data.command.actions && Array.isArray(data.command.actions)) {
-          executeActions(data.command.actions);
-        } else {
-          processVoiceCommand(data.command);
-        }
-        await fetch(`${API_BASE_URL}/api/commands`, { method: "DELETE" });
+      clearTimeout(timeoutId);
+      if (response.ok) {
+        return localhostUrl;
       }
     } catch (error) {
     }
-  }, 1e3);
+    return globalThis.API_BASE_URL || "https://voice-command-plugin.vercel.app";
+  }
+  var PLUGIN_ID = `plugin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  var API_BASE_URL = "https://voice-command-plugin.vercel.app";
+  (async () => {
+    API_BASE_URL = await detectApiUrl();
+    console.log("Plugin initialized, using API:", API_BASE_URL);
+    setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/commands`, {
+          headers: {
+            "X-Plugin-ID": PLUGIN_ID
+          }
+        });
+        const data = await response.json();
+        if (data.command) {
+          if (data.command.actions && Array.isArray(data.command.actions)) {
+            executeActions(data.command.actions);
+          } else {
+            processVoiceCommand(data.command);
+          }
+          await fetch(`${API_BASE_URL}/api/commands`, { method: "DELETE" });
+        }
+      } catch (error) {
+      }
+    }, 1e3);
+  })();
   async function processVoiceCommand(transcript) {
     try {
       const response = await fetch(`${API_BASE_URL}/api/claude`, {

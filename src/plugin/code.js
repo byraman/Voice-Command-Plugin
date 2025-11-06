@@ -6,17 +6,18 @@
   async function detectApiUrl() {
     try {
       const localhostUrl = "http://localhost:3000";
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1e3);
+      console.log("Checking for localhost server...");
       const response = await fetch(`${localhostUrl}/api/health`, {
-        method: "GET",
-        signal: controller.signal
+        method: "GET"
       });
-      clearTimeout(timeoutId);
       if (response.ok) {
+        console.log("Localhost server detected");
         return localhostUrl;
+      } else {
+        console.log("Localhost server responded but not OK:", response.status);
       }
     } catch (error) {
+      console.log("Localhost not available, using Vercel:", error instanceof Error ? error.message : String(error));
     }
     return globalThis.API_BASE_URL || "https://voice-command-plugin.vercel.app";
   }

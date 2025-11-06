@@ -7,13 +7,9 @@ async function detectApiUrl(): Promise<string> {
   try {
     const localhostUrl = 'http://localhost:3000';
     console.log('Checking for localhost server...');
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 1000);
     const response = await fetch(`${localhostUrl}/api/health`, { 
-      method: 'GET',
-      signal: controller.signal
+      method: 'GET'
     });
-    clearTimeout(timeoutId);
     if (response.ok) {
       console.log('Localhost server detected');
       return localhostUrl;

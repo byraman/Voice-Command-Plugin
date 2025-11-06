@@ -111,11 +111,14 @@ app.get('/api/plugin-status', (req, res) => {
 
 // Voice commands endpoints
 app.get('/api/commands', (req, res) => {
-  console.log('📥 GET /api/commands - Commands available:', currentCommand ? 1 : 0);
-  
   // Register plugin connection (track that a plugin is active)
   const pluginId = req.headers['x-plugin-id'] || 'unknown';
   pluginConnections.add(pluginId);
+  
+  // Only log when a command is actually available
+  if (currentCommand) {
+    console.log('📥 GET /api/commands - Command available:', currentCommand);
+  }
   
   res.json({ command: currentCommand });
 });

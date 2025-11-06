@@ -46,6 +46,20 @@ async function processVoiceCommand(transcript: string) {
       body: JSON.stringify({ transcript })
     });
     
+    // Handle rate limit errors
+    if (response.status === 429) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || 'Rate limit exceeded. Please wait before trying again.';
+      figma.notify(errorMessage);
+      return;
+    }
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      figma.notify(errorData.error || `Server error: ${response.status}`);
+      return;
+    }
+    
     const data = await response.json();
     
     if (data.actions && data.actions.length > 0) {

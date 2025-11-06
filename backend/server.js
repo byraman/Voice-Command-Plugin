@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const rateLimit = require('express-rate-limit');
 const { callOpenAI } = require('./ai-processor');
 
 // Only load dotenv in local development
@@ -14,19 +15,50 @@ let pluginConnections = new Set();
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 
+// Rate limiting for OpenAI API calls
+// Note: In-memory rate limiting works per serverless instance on Vercel.
+// For production at scale, consider Redis or Vercel's built-in rate limiting.
+// 
+// Per-IP: 10 requests per minute (prevents rapid spam)
+// Configure via env: RATE_LIMIT_PER_MINUTE (default: 10)
+const apiRateLimit = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: parseInt(process.env.RATE_LIMIT_PER_MINUTE) || 10,
+  message: {
+    error: 'Too many requests. Please wait a moment before trying again.',
+    retryAfter: '1 minute'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Daily limit per IP: 100 requests per day (allows good usage)
+// Configure via env: RATE_LIMIT_PER_DAY (default: 100)
+const dailyRateLimit = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  max: parseInt(process.env.RATE_LIMIT_PER_DAY) || 100,
+  message: {
+    error: 'Daily limit reached. You\'ve used all your requests for today. Try again tomorrow.',
+    limit: '100 requests per day'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // CORS middleware
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Plugin-ID');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return;
   }
-  
+
   next();
 });
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
@@ -36,8 +68,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Claude API endpoint
-app.post('/api/claude', async (req, res) => {
+// OpenAI endpoint with rate limiting
+app.post('/api/claude', dailyRateLimit, apiRateLimit, async (req, res) => {
   try {
     const { transcript } = req.body;
     
@@ -141,4 +173,3 @@ if (process.env.NODE_ENV !== 'production') {
     console.log('📱 Open this URL in your browser for voice interface');
   });
 }
-// CORS middleware updated for better compatibility

@@ -184,11 +184,10 @@
             }
             
             getApiUrl() {
-                // Always use HTTPS in production, allow localhost override via environment
+                // Auto-detect localhost
                 const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                const useLocalhost = window.USE_LOCALHOST === 'true' || window.USE_LOCALHOST === true;
                 
-                if (isLocalDev && useLocalhost) {
+                if (isLocalDev) {
                     return 'http://localhost:3000';
                 }
                 

@@ -6,6 +6,7 @@ console.log('Voice Commands Plugin loaded');
 async function detectApiUrl(): Promise<string> {
   try {
     const localhostUrl = 'http://localhost:3000';
+    console.log('Checking for localhost server...');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 1000);
     const response = await fetch(`${localhostUrl}/api/health`, { 
@@ -14,10 +15,13 @@ async function detectApiUrl(): Promise<string> {
     });
     clearTimeout(timeoutId);
     if (response.ok) {
+      console.log('Localhost server detected');
       return localhostUrl;
+    } else {
+      console.log('Localhost server responded but not OK:', response.status);
     }
   } catch (error) {
-    // Localhost not available, use Vercel
+    console.log('Localhost not available, using Vercel:', error instanceof Error ? error.message : String(error));
   }
   return (globalThis as any).API_BASE_URL || 'https://voice-command-plugin.vercel.app';
 }
@@ -46,11 +50,14 @@ let API_BASE_URL = 'https://voice-command-plugin.vercel.app';
       const data = await response.json();
       
       if (data.command) {
+        console.log('Command received:', data.command);
         // If command has actions, execute them directly
         if (data.command.actions && Array.isArray(data.command.actions)) {
+          console.log('Executing actions:', data.command.actions);
           executeActions(data.command.actions);
         } else {
           // Send to OpenAI API for processing
+          console.log('Processing voice command:', data.command);
           processVoiceCommand(data.command);
         }
         
@@ -90,8 +97,10 @@ async function processVoiceCommand(transcript: string) {
     const data = await response.json();
     
     if (data.actions && data.actions.length > 0) {
+      console.log('OpenAI returned actions:', data.actions);
       executeActions(data.actions);
     } else {
+      console.log('No actions generated from command');
       figma.notify('No actions generated from command');
     }
     
@@ -117,6 +126,7 @@ function executeActions(actions: any[]) {
 function executeAction(action: any) {
   const { op, action: actionName, args = {}, target } = action;
   const command = op || actionName;
+  console.log(`Executing action: ${command}`, args);
   
   switch (command) {
     // CREATE SHAPES

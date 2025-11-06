@@ -34,9 +34,12 @@
         });
         const data = await response.json();
         if (data.command) {
+          console.log("Command received:", data.command);
           if (data.command.actions && Array.isArray(data.command.actions)) {
+            console.log("Executing actions:", data.command.actions);
             executeActions(data.command.actions);
           } else {
+            console.log("Processing voice command:", data.command);
             processVoiceCommand(data.command);
           }
           await fetch(`${API_BASE_URL}/api/commands`, { method: "DELETE" });
@@ -67,8 +70,10 @@
       }
       const data = await response.json();
       if (data.actions && data.actions.length > 0) {
+        console.log("OpenAI returned actions:", data.actions);
         executeActions(data.actions);
       } else {
+        console.log("No actions generated from command");
         figma.notify("No actions generated from command");
       }
     } catch (error) {
@@ -89,6 +94,7 @@
   function executeAction(action) {
     const { op, action: actionName, args = {}, target } = action;
     const command = op || actionName;
+    console.log(`Executing action: ${command}`, args);
     switch (command) {
       // CREATE SHAPES
       case "create_rectangle":

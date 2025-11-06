@@ -1,40 +1,67 @@
 // code.ts - Main Figma plugin logic
 figma.showUI(__html__, { width: 500, height: 300 });
+console.log('Voice Commands Plugin loaded');
 
-// Get API URL from environment or default to Vercel
-const API_BASE_URL = (globalThis as any).API_BASE_URL || 'https://voice-command-plugin.vercel.app';
+// Auto-detect API URL: try localhost first, fallback to Vercel
+async function detectApiUrl(): Promise<string> {
+  try {
+    const localhostUrl = 'http://localhost:3000';
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1000);
+    const response = await fetch(`${localhostUrl}/api/health`, { 
+      method: 'GET',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if (response.ok) {
+      return localhostUrl;
+    }
+  } catch (error) {
+    // Localhost not available, use Vercel
+  }
+  return (globalThis as any).API_BASE_URL || 'https://voice-command-plugin.vercel.app';
+}
 
 // Plugin UI is passive - no message handling needed
 
 // Generate unique plugin ID
 const PLUGIN_ID = `plugin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-// Poll for commands from the voice interface via server
-setInterval(async () => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/commands`, {
-      headers: {
-        'X-Plugin-ID': PLUGIN_ID
-      }
-    });
-    const data = await response.json();
-    
-    if (data.command) {
-      // If command has actions, execute them directly
-      if (data.command.actions && Array.isArray(data.command.actions)) {
-        executeActions(data.command.actions);
-      } else {
-        // Send to OpenAI API for processing
-        processVoiceCommand(data.command);
-      }
+// API URL will be set after detection
+let API_BASE_URL = 'https://voice-command-plugin.vercel.app';
+
+// Initialize plugin with auto-detected API URL
+(async () => {
+  API_BASE_URL = await detectApiUrl();
+  console.log('Plugin initialized, using API:', API_BASE_URL);
+  
+  // Poll for commands from the voice interface via server
+  setInterval(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/commands`, {
+        headers: {
+          'X-Plugin-ID': PLUGIN_ID
+        }
+      });
+      const data = await response.json();
       
-      // Clear the command after processing
-      await fetch(`${API_BASE_URL}/api/commands`, { method: 'DELETE' });
+      if (data.command) {
+        // If command has actions, execute them directly
+        if (data.command.actions && Array.isArray(data.command.actions)) {
+          executeActions(data.command.actions);
+        } else {
+          // Send to OpenAI API for processing
+          processVoiceCommand(data.command);
+        }
+        
+        // Clear the command after processing
+        await fetch(`${API_BASE_URL}/api/commands`, { method: 'DELETE' });
+      }
+    } catch (error) {
+      // Silently ignore connection errors
     }
-  } catch (error) {
-    // Silently ignore connection errors
-  }
-}, 1000);
+  }, 1000);
+})();
 
 async function processVoiceCommand(transcript: string) {
   try {

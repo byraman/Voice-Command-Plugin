@@ -178,19 +178,68 @@
   </div>
 
   <script>
+    let pluginId = null;
+    let apiUrl = 'https://voice-command-plugin.vercel.app'; // Default fallback
+
+    // Listen for messages from main plugin code
+    window.onmessage = (event) => {
+      console.log('UI received message:', event.data);
+      
+      // Handle both direct data and pluginMessage format
+      const data = event.data.pluginMessage || event.data;
+      
+      if (data && data.type === 'plugin-id') {
+        pluginId = data.pluginId;
+        console.log('Received plugin ID:', pluginId);
+      } else if (data && data.type === 'api-url') {
+        // Update API URL if received (though we detect it ourselves)
+        if (data.apiUrl) {
+          apiUrl = data.apiUrl;
+          console.log('Received API URL from plugin:', apiUrl);
+        }
+      }
+    };
+
+    // Auto-detect API URL (same logic as plugin code)
+    async function detectApiUrl() {
+      try {
+        const localhostUrl = 'http://localhost:3000';
+        const response = await fetch(`${localhostUrl}/api/health`, { 
+          method: 'GET'
+        });
+        if (response.ok) {
+          console.log('UI: Localhost server detected');
+          return localhostUrl;
+        }
+      } catch (error) {
+        console.log('UI: Localhost not available, using Vercel');
+      }
+      return 'https://voice-command-plugin.vercel.app';
+    }
+
+    // Detect API URL on load
+    (async () => {
+      apiUrl = await detectApiUrl();
+      console.log('UI: Using API URL:', apiUrl);
+    })();
+
     function openVoiceInterface() {
-      const apiUrl = window.API_BASE_URL || 'https://voice-command-plugin.vercel.app';
+      const url = pluginId ? `${apiUrl}?pluginId=${pluginId}` : apiUrl;
+      
+      console.log('Opening voice interface with URL:', url);
+      console.log('Current apiUrl:', apiUrl);
+      console.log('Current pluginId:', pluginId);
       
       const voiceWindow = window.open(
-        apiUrl,
+        url,
         'voiceInterface',
         'width=500,height=400,scrollbars=yes,resizable=yes'
       );
 
       if (voiceWindow) {
-        console.log('Voice interface opened at:', apiUrl);
+        console.log('Voice interface opened successfully at:', url);
       } else {
-        console.error('Failed to open voice interface. Check popup blockers.');
+        console.error('Failed to open voice interface. Check popup blockers. URL was:', url);
       }
     }
 

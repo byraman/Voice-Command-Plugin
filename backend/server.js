@@ -9,7 +9,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const app = express();
-let currentCommand = null;
+let pluginCommands = new Map(); // Map<pluginId, command>
 let pluginConnections = new Set();
 
 // Middleware
@@ -115,19 +115,27 @@ app.get('/api/commands', (req, res) => {
   const pluginId = req.headers['x-plugin-id'] || 'unknown';
   pluginConnections.add(pluginId);
   
+  // Get command for this specific plugin
+  const command = pluginCommands.get(pluginId) || null;
+  
   // Only log when a command is actually available
-  if (currentCommand) {
-    console.log('📥 GET /api/commands - Command available:', currentCommand);
+  if (command) {
+    console.log(`📥 GET /api/commands - Command available for ${pluginId}:`, command);
   }
   
-  res.json({ command: currentCommand });
+  res.json({ command });
 });
 
 app.post('/api/commands', (req, res) => {
   try {
-    const { transcript } = req.body;
-    currentCommand = transcript;
-    console.log('Voice command received:', currentCommand);
+    const { transcript, pluginId } = req.body;
+    
+    if (!pluginId) {
+      return res.status(400).json({ error: 'pluginId is required' });
+    }
+    
+    pluginCommands.set(pluginId, transcript);
+    console.log(`Voice command received for ${pluginId}:`, transcript);
     res.json({ success: true });
   } catch (error) {
     res.status(400).json({ error: 'Invalid JSON' });
@@ -135,8 +143,9 @@ app.post('/api/commands', (req, res) => {
 });
 
 app.delete('/api/commands', (req, res) => {
-  console.log('🗑️ DELETE /api/commands - Clearing commands');
-  currentCommand = null;
+  const pluginId = req.headers['x-plugin-id'] || 'unknown';
+  pluginCommands.delete(pluginId);
+  console.log(`🗑️ DELETE /api/commands - Cleared command for ${pluginId}`);
   res.json({ success: true });
 });
 

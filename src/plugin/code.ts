@@ -22,18 +22,25 @@ async function detectApiUrl(): Promise<string> {
   return (globalThis as any).API_BASE_URL || 'https://voice-command-plugin.vercel.app';
 }
 
-// Plugin UI is passive - no message handling needed
-
 // Generate unique plugin ID
 const PLUGIN_ID = `plugin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 // API URL will be set after detection
 let API_BASE_URL = 'https://voice-command-plugin.vercel.app';
 
+// Send messages to UI after a short delay to ensure UI is ready
+setTimeout(() => {
+  figma.ui.postMessage({ type: 'plugin-id', pluginId: PLUGIN_ID });
+  figma.ui.postMessage({ type: 'api-url', apiUrl: API_BASE_URL });
+}, 100);
+
 // Initialize plugin with auto-detected API URL
 (async () => {
   API_BASE_URL = await detectApiUrl();
   console.log('Plugin initialized, using API:', API_BASE_URL);
+  
+  // Send detected API URL to UI (will update if different from default)
+  figma.ui.postMessage({ type: 'api-url', apiUrl: API_BASE_URL });
   
   // Poll for commands from the voice interface via server
   setInterval(async () => {
@@ -47,6 +54,15 @@ let API_BASE_URL = 'https://voice-command-plugin.vercel.app';
       
       if (data.command) {
         console.log('Command received:', data.command);
+        
+        // Clear the command IMMEDIATELY to prevent re-processing
+        await fetch(`${API_BASE_URL}/api/commands`, { 
+          method: 'DELETE',
+          headers: {
+            'X-Plugin-ID': PLUGIN_ID
+          }
+        });
+        
         // If command has actions, execute them directly
         if (data.command.actions && Array.isArray(data.command.actions)) {
           console.log('Executing actions:', data.command.actions);
@@ -56,9 +72,6 @@ let API_BASE_URL = 'https://voice-command-plugin.vercel.app';
           console.log('Processing voice command:', data.command);
           processVoiceCommand(data.command);
         }
-        
-        // Clear the command after processing
-        await fetch(`${API_BASE_URL}/api/commands`, { method: 'DELETE' });
       }
     } catch (error) {
       // Silently ignore connection errors

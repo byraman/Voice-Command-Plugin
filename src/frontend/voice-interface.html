@@ -194,6 +194,14 @@
                 this.connectionStatus = document.getElementById('connectionStatus');
                 this.transcript = document.getElementById('transcript');
                 
+                // Get pluginId from URL params
+                const urlParams = new URLSearchParams(window.location.search);
+                this.pluginId = urlParams.get('pluginId');
+                
+                if (!this.pluginId) {
+                    console.warn('No pluginId in URL - commands may not reach the correct plugin instance');
+                }
+                
                 this.apiUrl = this.getApiUrl();
                 
                 this.init();
@@ -424,6 +432,11 @@
             
             async sendCommand(command) {
                 // Don't block mic functionality if API fails
+                if (!this.pluginId) {
+                    this.updateStatus('Error: No plugin ID. Please open voice interface from the Figma plugin.');
+                    return;
+                }
+                
                 try {
                     console.log(`Sending command to: ${this.apiUrl}`);
                     this.updateStatus(`Sending to Figma: "${command}"`);
@@ -434,7 +447,10 @@
                             'Content-Type': 'application/json',
                             'Accept': 'application/json',
                         },
-                        body: JSON.stringify({ transcript: command.trim() })
+                        body: JSON.stringify({ 
+                            transcript: command.trim(),
+                            pluginId: this.pluginId
+                        })
                     });
                     
                     if (response.ok) {
@@ -442,7 +458,7 @@
                         console.log('Command sent successfully:', result);
                         this.updateStatus(`Command sent: "${command}"`);
                         this.transcript.textContent = 'Command sent! Waiting for next command...';
-                    } else {
+                    } else {r
                         console.error('Server error:', response.status, response.statusText);
                         this.updateStatus(`Command received: "${command}" (Server error: ${response.status})`);
                     }

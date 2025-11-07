@@ -23,9 +23,14 @@
   }
   var PLUGIN_ID = `plugin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   var API_BASE_URL = "https://voice-command-plugin.vercel.app";
+  setTimeout(() => {
+    figma.ui.postMessage({ type: "plugin-id", pluginId: PLUGIN_ID });
+    figma.ui.postMessage({ type: "api-url", apiUrl: API_BASE_URL });
+  }, 100);
   (async () => {
     API_BASE_URL = await detectApiUrl();
     console.log("Plugin initialized, using API:", API_BASE_URL);
+    figma.ui.postMessage({ type: "api-url", apiUrl: API_BASE_URL });
     setInterval(async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/commands`, {
@@ -36,6 +41,12 @@
         const data = await response.json();
         if (data.command) {
           console.log("Command received:", data.command);
+          await fetch(`${API_BASE_URL}/api/commands`, {
+            method: "DELETE",
+            headers: {
+              "X-Plugin-ID": PLUGIN_ID
+            }
+          });
           if (data.command.actions && Array.isArray(data.command.actions)) {
             console.log("Executing actions:", data.command.actions);
             executeActions(data.command.actions);
@@ -43,7 +54,6 @@
             console.log("Processing voice command:", data.command);
             processVoiceCommand(data.command);
           }
-          await fetch(`${API_BASE_URL}/api/commands`, { method: "DELETE" });
         }
       } catch (error) {
       }

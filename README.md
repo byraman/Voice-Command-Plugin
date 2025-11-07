@@ -1,133 +1,117 @@
 # Voice Commands for Figma
 
-A Figma plugin that enables **hands-free designing** through voice commands. Convert your speech to text, let AI understand your design intent, and execute tasks directly on the Figma canvas.
+A Figma plugin that enables hands-free designing through voice commands. Converts speech to text, processes commands with AI, and executes actions directly on the Figma canvas.
 
-## 🎯 What Makes This Different
+## Overview
 
-Unlike AI design tools that make decisions for you, this plugin **keeps you in control**. You're still the designer - the AI simply helps translate your voice commands into Figma actions. Perfect for those times when you want to design without constantly reaching for the mouse and keyboard.
+Voice-controlled design workflow for Figma. Speak design commands naturally, and the plugin translates them into Figma API actions. Maintains designer control while reducing mouse and keyboard dependency.
 
-## ✨ Features
+## Features
 
-- 🎤 **Voice Recognition** - Speak your design commands naturally
-- 🤖 **AI Translation** - LLM converts speech to Figma API calls
-- 🎨 **Canvas Integration** - Direct execution on Figma canvas
-- 🚀 **Hands-Free Design** - Design without touching mouse/keyboard
-- ⚡ **Real-time Processing** - Instant command execution
-- 🎯 **Natural Language** - Use everyday language for design tasks
+- Voice recognition via Web Speech API
+- AI-powered command translation
+- Direct Figma canvas execution
+- Real-time command processing
+- Natural language command support
 
-## 🚀 Installation
+## Installation
 
-### For Development
+### Development Setup
 
 ```bash
-# Clone the repository
 git clone https://github.com/byraman/Voice-Command-Plugin.git
-
-# Navigate to the project directory
 cd Voice-Command-Plugin
-
-# Install dependencies
 npm install
-
-# Build the plugin
-npm run build
+npm run plugin:build
 ```
 
-### For Figma
+### Figma Plugin Installation
 
 1. Open Figma Desktop App
-2. Go to Plugins → Development → Import plugin from manifest
-3. Select the `manifest.json` file from this project
-4. The plugin will appear in your plugins list
+2. Plugins → Development → Import plugin from manifest
+3. Select `src/plugin/manifest.json`
+4. Plugin appears in plugins list
 
-## 🎤 Usage
+## Usage
 
-1. **Open the Plugin** - Find "Voice Commands for Figma" in your plugins
-2. **Start Listening** - Click the microphone button to begin
-3. **Speak Naturally** - Use commands like:
-   - "Create a rectangle here"
-   - "Make this text bigger"
-   - "Align these elements to the left"
-   - "Change the color to blue"
-   - "Add some padding around this"
+1. Open the plugin in Figma
+2. Open the voice interface URL in Chrome browser
+3. Click microphone button to start listening
+4. Speak design commands (e.g., "create a rectangle", "create a light grey auto-layout frame in 16:9 ratio")
+5. Commands execute automatically on the canvas
 
-## 🛠️ How It Works
+## Example Commands
 
-1. **Voice Input** → Your speech is captured via Web Speech API
-2. **Text Conversion** → Speech is converted to text
-3. **AI Processing** → LLM understands your design intent
-4. **Figma API** → Commands are translated to Figma API calls
-5. **Canvas Execution** → Actions are performed on your design
+- Shape creation: "Add a cyan circle at X 400 and Y -3150", "Create a rectangle with rounded corners"
+- Text operations: "Make this text bold", "Increase font size to 24px"
+- Layout: "Center this element", "Distribute these items evenly"
+- Styling: "Change background to #FF5733", "Add a drop shadow"
+- Organization: "Group these elements", "Bring to front"
 
-## 🎨 Example Commands
+## Architecture
 
-- **Shape Creation**: "Add a circle", "Create a rectangle with rounded corners"
-- **Text Operations**: "Make this text bold", "Increase font size to 24px"
-- **Layout**: "Center this element", "Distribute these items evenly"
-- **Styling**: "Change background to #FF5733", "Add a drop shadow"
-- **Organization**: "Group these elements", "Bring to front"
+1. Voice input captured via browser Web Speech API
+2. Transcript sent to server endpoint
+3. OpenAI processes natural language into structured actions
+4. Plugin polls server for commands
+5. Actions executed on Figma canvas via Plugin API
 
-## 🔧 Development
+## Development
 
 ### Prerequisites
 
 - Node.js 16+
 - Figma Desktop App
-- OpenAI API key (for OpenAI LLM processing)
+- OpenAI API key
 
 ### Setup
 
-1. Clone the repository
+1. Clone repository
 2. Install dependencies: `npm install`
-3. Set up your OpenAI API key in the plugin configuration
-4. Build the plugin: `npm run build`
-5. Import the plugin into Figma
+3. Create `.env` file with `OPENAI_API_KEY`
+4. Start local server: `npm run dev`
+5. Build plugin: `npm run plugin:build`
+6. Import plugin into Figma
 
 ### Project Structure
 
 ```
-├── code.js          # Main plugin logic
-├── ui.html          # Plugin UI interface
-├── manifest.json    # Figma plugin manifest
-├── package.json     # Dependencies and scripts
-└── README.md        # This file
+├── backend/
+│   ├── server.js          # Express server
+│   └── ai-processor.js    # OpenAI integration
+├── src/
+│   ├── plugin/            # Figma plugin files
+│   │   ├── code.ts        # Main plugin logic
+│   │   ├── ui.html        # Plugin UI
+│   │   └── manifest.json  # Plugin manifest
+│   └── frontend/
+│       └── voice-interface.html  # Voice input web interface
+├── vercel.json            # Vercel deployment config
+└── package.json
 ```
 
-## 🤝 Contributing
+### Scripts
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- `npm run dev` - Start local development server
+- `npm run plugin:build` - Build TypeScript plugin code
+- `npm run plugin:dev` - Build plugin with watch mode
 
-## 📝 License
+## Deployment
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Deployed on Vercel. Push to GitHub for automatic deployment.
 
-## 🐛 Support
+1. Set environment variables in Vercel dashboard:
+   - `OPENAI_API_KEY`
+   - `NEXT_PUBLIC_API_URL` (optional)
 
-If you encounter any issues or have questions, please file an issue on the GitHub repository.
+2. Plugin auto-detects localhost in development, uses Vercel URL in production
 
-## 🗺️ Roadmap
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
-- [ ] **Core Voice Commands** - Basic shape creation and manipulation
-- [ ] **Advanced Commands** - Complex layout and styling operations
-- [ ] **Context Awareness** - Better understanding of selected elements
-- [ ] **Custom Commands** - User-defined voice shortcuts
-- [ ] **Multi-language Support** - Voice recognition in different languages
-- [ ] **Command History** - Undo/redo voice commands
-- [ ] **Batch Operations** - Multiple commands in sequence
-- [ ] **Accessibility Features** - Enhanced support for users with disabilities
+## License
 
-## 💡 Use Cases
+MIT License - see the [LICENSE](LICENSE) file for details.
 
-- **Accessibility** - Design for users with mobility limitations
-- **Multitasking** - Design while taking notes or referencing materials
-- **Ergonomics** - Reduce repetitive mouse/keyboard use
-- **Speed** - Quick design iterations through voice
-- **Hands-free** - Design while standing or in different positions
+## Support
 
----
-
-Made with ❤️ for hands-free design workflows
+File issues on the [GitHub repository](https://github.com/byraman/Voice-Command-Plugin/issues).

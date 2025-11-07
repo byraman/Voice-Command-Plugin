@@ -3,160 +3,179 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Interface - Figma Plugin</title>
+    <title>Control Figma with Voice</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
-            padding: 20px;
-            background: #f8f9fa;
+            padding: 0;
+            background: #161616;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
             text-align: center;
         }
+        
         .container {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        .title {
-            color: #333;
-            margin-bottom: 30px;
-        }
-        .info-message {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #2196f3;
-            font-size: 14px;
-            color: #1565c0;
-            text-align: left;
-        }
-        .transcript {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            min-height: 60px;
-            border: 2px solid #e1e5e9;
-            font-size: 16px;
-            color: #333;
-            text-align: left;
-        }
-        .status {
-            color: #666;
-            font-size: 14px;
-            margin: 10px 0;
-        }
-        .connection-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        .connection-status.connected {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .connection-status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-        .status-dot.connected {
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
-        }
-        .mic-button {
-            background: #007AFF;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 20px 0;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
-        }
-        .mic-button:hover {
-            background: #0056CC;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
-        }
-        .mic-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .mic-button.listening {
-            background: #FF3B30;
-            animation: pulse 1.5s infinite;
-        }
-        .mic-button.stop {
-            background: #FF3B30;
-        }
-        .mic-button.stop:hover {
-            background: #D70015;
-        }
-        .mic-controls {
+            max-width: 800px;
+            padding: 24px;
             display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin: 0 0 10px 0;
+            font-weight: 500;
+            color: #ffffff;
+        }
+        
+        .subtitle {
+            color: #878787;
+            font-size: 15px;
+            margin: 0 0 42px 0;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+        
+        .main-content {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            justify-content: center;
+            margin-bottom: 140px;
+            line-height: 1.4;
+        }
+        
+        .mic-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 200px;
+        }
+        
+        #micButton {
+            background: #212121;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+        }
+        
+        #micButton:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        #micButton svg {
+            width: 54px;
+            height: 54px;
+        }
+        
+        .mic-instruction {
+            color: #ffffff;
+            font-size: 13px;
+            max-width: 160px;
+            margin: 0;
+        }
+        
+        .status-box {
+            border:2px solid #222222;
+            border-radius: 8px;
+            padding: 12px;
+            width: 380px;
+            min-height: 130px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
             gap: 10px;
-            margin: 20px 0;
         }
-        .mic-controls .mic-button {
-            flex: 1;
+        
+        .connected-badge {
+            background: #102a16;
+            color: #0ead33;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: inline-block;
+            width: fit-content;
+            font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', 'Courier New', monospace;
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        
+        .connected-badge.disconnected {
+            background: #1a0d0e;
+            color: #d14340;
+        }
+        
+        #statusText {
+            color: #ffffff;
+            font-size: 15px;
+            white-space: pre-wrap;
+            flex-grow: 1;
+            margin: 0;
+        }
+        
+        #transcript {
+            color: #ffffff;
+            font-size: 15px;
+            white-space: pre-wrap;
+            margin-top: 0;
+        }
+        
+        .footer {
+            color: #999999;
+            font-size: 14px;
+            margin-top: 40px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="title"> Voice Interface</h1>
-        
-        <div id="connectionStatus" class="connection-status disconnected">
-            <div class="status-dot"></div>
-            <span id="statusText">Checking connection...</span>
+        <h1>Control Figma with Voice</h1>
+        <p class="subtitle">This webpage is just used as a mic source since Figma doesn't support audio input natively.</p>
+
+        <div class="main-content">
+            <div class="mic-section">
+                <button id="micButton">
+                    <!-- Mic Off SVG -->
+                    <svg id="micOffIcon" width="54" height="54" viewBox="0 0 54 54" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8.93189 5.557C9.59089 4.89799 10.6591 4.89799 11.3181 5.557L46.7556 40.9945C47.4146 41.6535 47.4146 42.7217 46.7556 43.3807C46.0966 44.0397 45.0284 44.0397 44.3694 43.3807L8.93189 7.94323C8.27288 7.28422 8.27288 6.21601 8.93189 5.557Z" fill="#E83838"/>
+                        <path d="M42.1875 25.3124V21.9849C42.1875 21.0768 41.4893 20.2974 40.5812 20.2521C40.353 20.2411 40.125 20.2765 39.911 20.3562C39.6969 20.436 39.5013 20.5583 39.3359 20.7159C39.1705 20.8735 39.0389 21.063 38.9489 21.273C38.8589 21.483 38.8125 21.709 38.8125 21.9374V25.3124C38.813 26.1773 38.7182 27.0396 38.5298 27.8838C38.5222 27.9182 38.5233 27.954 38.5331 27.9879C38.5428 28.0218 38.5609 28.0527 38.5857 28.0778L40.9683 30.4604C40.9933 30.4854 41.0242 30.5037 41.0581 30.5137C41.0921 30.5236 41.128 30.5249 41.1625 30.5173C41.1971 30.5097 41.2292 30.4936 41.2559 30.4704C41.2826 30.4472 41.303 30.4176 41.3153 30.3844C41.8939 28.7561 42.1889 27.0406 42.1875 25.3124ZM27 37.125C23.8702 37.1149 20.8715 35.8672 18.6584 33.6541C16.4453 31.441 15.1975 28.4422 15.1875 25.3124V21.9849C15.1875 21.0768 14.4893 20.2974 13.5812 20.2521C13.353 20.2411 13.125 20.2765 12.911 20.3562C12.6969 20.436 12.5013 20.5583 12.3359 20.7159C12.1705 20.8735 12.0388 21.063 11.9489 21.273C11.8589 21.483 11.8125 21.709 11.8125 21.9374V25.3124C11.8125 33.1171 17.7293 39.5634 25.3125 40.4061V45.5624H20.2975C19.3894 45.5624 18.61 46.2607 18.5646 47.1687C18.5536 47.3969 18.5891 47.6249 18.6688 47.839C18.7485 48.0531 18.8709 48.2487 19.0285 48.4141C19.1861 48.5794 19.3756 48.7111 19.5856 48.8011C19.7955 48.891 20.0216 48.9374 20.25 48.9374H33.7025C34.6106 48.9374 35.39 48.2392 35.4354 47.3312C35.4464 47.103 35.4109 46.875 35.3312 46.6609C35.2515 46.4468 35.1291 46.2512 34.9715 46.0858C34.8139 45.9205 34.6244 45.7888 34.4144 45.6988C34.2045 45.6089 33.9784 45.5625 33.75 45.5624H28.6875V40.4061C30.6083 40.1923 32.4702 39.6115 34.1719 38.6954C34.2296 38.664 34.2792 38.6195 34.3167 38.5656C34.3542 38.5116 34.3786 38.4497 34.3879 38.3846C34.3973 38.3196 34.3913 38.2532 34.3704 38.1909C34.3496 38.1286 34.3144 38.072 34.2679 38.0257L32.3272 36.0861C32.2809 36.04 32.2215 36.0094 32.1571 35.9984C32.0927 35.9875 32.0265 35.9967 31.9676 36.0249C30.4124 36.7513 28.7165 37.1269 27 37.125ZM27.1202 5.06245C25.6875 5.03616 24.2719 5.37674 23.0079 6.05183C21.744 6.72692 20.6737 7.71407 19.8988 8.91944C19.8465 9.00059 19.8237 9.09721 19.834 9.19318C19.8444 9.28915 19.8874 9.37867 19.9557 9.44679L35.0779 24.5742C35.1074 24.6036 35.145 24.6235 35.1859 24.6316C35.2268 24.6396 35.2692 24.6353 35.3077 24.6193C35.3461 24.6033 35.379 24.5762 35.4021 24.5415C35.4252 24.5068 35.4375 24.4661 35.4375 24.4244V13.5959C35.4375 8.96479 31.7461 5.12573 27.1202 5.06245Z" fill="#E83838"/>
+                        <path d="M18.9221 22.6758C18.8926 22.6465 18.855 22.6265 18.8141 22.6185C18.7732 22.6104 18.7308 22.6147 18.6923 22.6307C18.6539 22.6467 18.621 22.6738 18.5979 22.7085C18.5748 22.7432 18.5625 22.7839 18.5625 22.8256V25.2071C18.564 27.4552 19.4528 29.6119 21.0357 31.2083C22.0738 32.2876 23.385 33.0654 24.8298 33.4589C26.2747 33.8525 27.7992 33.847 29.2412 33.4431C29.2768 33.4331 29.309 33.4139 29.3348 33.3875C29.3606 33.3611 29.3791 33.3284 29.3882 33.2926C29.3974 33.2568 29.397 33.2193 29.3872 33.1837C29.3773 33.1481 29.3582 33.1157 29.3319 33.0898L18.9221 22.6758Z" fill="#E83838"/>
+                    </svg>
+                    <!-- Mic On SVG -->
+                    <svg id="micOnIcon" style="display: none;" stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" width="54" height="54" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="none" stroke="#E83838" stroke-linecap="round" stroke-linejoin="round" stroke-width="32" d="M192 448h128m64-240v32c0 70.4-57.6 128-128 128h0c-70.4 0-128-57.6-128-128v-32m128 160v80"></path>
+                        <path fill="#E83838" d="M256 320a78.83 78.83 0 0 1-56.55-24.1A80.89 80.89 0 0 1 176 239V128a79.69 79.69 0 0 1 80-80c44.86 0 80 35.14 80 80v111c0 44.66-35.89 81-80 81z"></path>
+                    </svg>
+                </button>
+                <p class="mic-instruction">Click mic and instruct voice commands</p>
+            </div>
+
+            <div class="status-box">
+                <span id="connectionStatus" class="connected-badge">CONNECTED WITH FIGMA</span>
+                <p id="statusText">Waiting for voice input...</p>
+                <div id="transcript" style="display: none;"></div>
+            </div>
         </div>
-        
-        <div class="info-message">
-            <strong>This webpage is just used as a mic source since Figma doesn't support audio input natively.</strong>
-        </div>
-        
-        <div class="mic-controls">
-            <button id="micButton" class="mic-button">
-                 Start Listening
-            </button>
-            <button id="stopButton" class="mic-button stop" disabled>
-                 Stop Listening
-            </button>
-        </div>
-        
-        <div id="transcript" class="transcript">
-            Waiting for voice input...
-        </div>
-        
-        <div id="status" class="status">
-            Click the button to start voice recognition
-        </div>
+
+        <p class="footer">By @uxbyraman</p>
     </div>
 
     <script>
@@ -169,13 +188,12 @@
                 this.maxRetries = 2; // Reduced retries to prevent browser restrictions
                 this.isInitialized = false;
                 this.micButton = document.getElementById('micButton');
-                this.stopButton = document.getElementById('stopButton');
-                this.transcript = document.getElementById('transcript');
-                this.status = document.getElementById('status');
-                this.connectionStatus = document.getElementById('connectionStatus');
+                this.micOffIcon = document.getElementById('micOffIcon');
+                this.micOnIcon = document.getElementById('micOnIcon');
                 this.statusText = document.getElementById('statusText');
+                this.connectionStatus = document.getElementById('connectionStatus');
+                this.transcript = document.getElementById('transcript');
                 
-                // Force HTTPS-only API URL
                 this.apiUrl = this.getApiUrl();
                 
                 this.init();
@@ -210,24 +228,21 @@
                     const data = await response.json();
                     
                     if (data.connected) {
-                        this.updateConnectionStatus(true, `Connected (${data.activePlugins} plugin${data.activePlugins !== 1 ? 's' : ''})`);
+                        this.updateConnectionStatus(true, 'CONNECTED WITH FIGMA');
                     } else {
-                        this.updateConnectionStatus(false, 'Disconnected - Start Figma plugin');
+                        this.updateConnectionStatus(false, 'DISCONNECTED');
                     }
                 } catch (error) {
-                    this.updateConnectionStatus(false, 'Disconnected - Server unreachable');
+                    this.updateConnectionStatus(false, 'DISCONNECTED - Server Unreachable');
                 }
             }
             
             updateConnectionStatus(connected, text) {
-                this.connectionStatus.className = `connection-status ${connected ? 'connected' : 'disconnected'}`;
-                this.statusText.textContent = text;
-                
-                const dot = this.connectionStatus.querySelector('.status-dot');
+                this.connectionStatus.textContent = text;
                 if (connected) {
-                    dot.classList.add('connected');
+                    this.connectionStatus.classList.remove('disconnected');
                 } else {
-                    dot.classList.remove('connected');
+                    this.connectionStatus.classList.add('disconnected');
                 }
             }
             
@@ -237,7 +252,7 @@
                 
                 // Only setup buttons, not recognition yet
                 this.setupMicButtons();
-                this.updateStatus('Click "Start Listening" to begin voice recognition');
+                this.updateStatus('Click mic to start voice recognition');
             }
             
             setupMicButtons() {
@@ -247,14 +262,9 @@
                     }
                     this.startRecognition();
                 });
-                
-                this.stopButton.addEventListener('click', () => {
-                    this.stopRecognition();
-                });
             }
             
             initializeSpeechRecognition() {
-                // Check HTTPS requirement first
                 if (!this.isSecureContext()) {
                     this.updateStatus('Voice recognition requires HTTPS. Please access this page via HTTPS.');
                     return false;
@@ -274,7 +284,7 @@
                         console.log('Speech recognition started');
                         this.isListening = true;
                         this.updateUI();
-                        this.updateStatus('Listening... Speak your command');
+                        this.updateStatus('Say something like "create a rectangle"');
                     };
                     
                     this.recognition.onresult = (event) => {
@@ -290,15 +300,14 @@
                             }
                         }
                         
-                        const displayText = finalTranscript || interimTranscript;
-                        this.transcript.textContent = displayText;
+                        if (interimTranscript) {
+                            this.updateStatus(`Live Transcript: ${interimTranscript}`);
+                        }
                         
                         if (finalTranscript) {
                             console.log('🎤 Final transcript:', finalTranscript);
-                            
-                            // Send command to the server
+                            this.updateStatus(`Final: ${finalTranscript}`);
                             this.sendCommand(finalTranscript);
-                            
                             this.resetSilenceTimer();
                         } else if (interimTranscript.trim().length > 0) {
                             // Only reset timer if there's actual speech content
@@ -321,21 +330,20 @@
                         
                         // Handle different error types - NO AUTO RETRY for most errors
                         if (event.error === 'not-allowed') {
-                            this.updateStatus('Microphone access denied. Please click the microphone icon in your browser address bar and allow microphone access, then try again.');
+                            this.updateStatus('Microphone access denied. Please allow microphone access and try again.');
                         } else if (event.error === 'no-speech') {
-                            this.updateStatus('No speech detected. Click "Start Listening" to try again.');
+                            this.updateStatus('No speech detected. Click mic to try again.');
                         } else if (event.error === 'audio-capture') {
-                            this.updateStatus('No microphone found. Please check your microphone connection and try again.');
+                            this.updateStatus('No microphone found. Please check your microphone connection.');
                         } else if (event.error === 'network') {
-                            this.updateStatus('Network error. Please check your internet connection and try again.');
-                            // Only retry network errors with controlled logic
+                            this.updateStatus('Network error. Please check your internet connection.');
                             if (this.retryCount < this.maxRetries) {
                                 this.handleNetworkError();
                             }
                         } else if (event.error === 'aborted') {
-                            this.updateStatus('Recognition stopped. Click "Start Listening" to try again.');
+                            this.updateStatus('Recognition stopped. Click mic to try again.');
                         } else {
-                            this.updateStatus(`Error: ${event.error}. Click "Start Listening" to try again.`);
+                            this.updateStatus(`Error: ${event.error}. Click mic to try again.`);
                         }
                     };
                 } else {
@@ -354,14 +362,6 @@
                        window.location.hostname === '127.0.0.1';
             }
             
-            toggleListening() {
-                if (this.isListening) {
-                    this.stopRecognition();
-                } else {
-                    this.startRecognition();
-                }
-            }
-            
             startRecognition() {
                 if (!this.isInitialized) {
                     this.updateStatus('Initializing speech recognition...');
@@ -376,10 +376,10 @@
                         this.retryCount = 0; // Reset retry count on successful start
                     } catch (error) {
                         console.error('Error starting recognition:', error);
-                        this.updateStatus('Error starting recognition: ' + error.message + '. Click "Start Listening" to try again.');
+                        this.updateStatus('Error starting recognition: ' + error.message + '. Click mic to try again.');
                     }
                 } else if (this.isListening) {
-                    this.updateStatus('Already listening. Click "Stop Listening" first.');
+                    this.stopRecognition();
                 }
             }
             
@@ -391,7 +391,7 @@
                     if (this.retryCount <= this.maxRetries && !this.isListening) {
                         this.startRecognition();
                     } else if (this.retryCount > this.maxRetries) {
-                        this.updateStatus('Max retries reached. Please check your internet connection and try again.');
+                        this.updateStatus('Max retries reached. Please check your internet connection.');
                     }
                 }, 3000); // Fixed delay, not exponential
             }
@@ -410,7 +410,7 @@
                     console.log('Silence detected after 5 seconds, stopping recognition...');
                     if (this.isListening) {
                         this.stopRecognition();
-                        this.updateStatus('Silence detected. Click "Start Listening" to try again.');
+                        this.updateStatus('Silence detected. Click mic to try again.');
                     }
                 }, 5000);
             }
@@ -426,6 +426,7 @@
                 // Don't block mic functionality if API fails
                 try {
                     console.log(`Sending command to: ${this.apiUrl}`);
+                    this.updateStatus(`Sending to Figma: "${command}"`);
                     
                     const response = await fetch(`${this.apiUrl}/api/commands`, {
                         method: 'POST',
@@ -449,25 +450,23 @@
                     console.error('Error sending command:', error);
                     // Don't fail the mic experience if API is down
                     this.updateStatus(`Command received: "${command}" (Offline mode - server unavailable)`);
-                    this.transcript.textContent = 'Command received! Waiting for next command...';
                 }
             }
             
-            
             updateUI() {
                 if (this.isListening) {
-                    this.micButton.classList.add('listening');
-                    this.micButton.disabled = true;
-                    this.stopButton.disabled = false;
-                } else {
-                    this.micButton.classList.remove('listening');
+                    this.micOffIcon.style.display = 'none';
+                    this.micOnIcon.style.display = 'block';
                     this.micButton.disabled = false;
-                    this.stopButton.disabled = true;
+                } else {
+                    this.micOffIcon.style.display = 'block';
+                    this.micOnIcon.style.display = 'none';
+                    this.micButton.disabled = false;
                 }
             }
             
             updateStatus(message) {
-                this.status.textContent = message;
+                this.statusText.textContent = message;
             }
         }
         
@@ -477,11 +476,8 @@
             if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
                 document.body.innerHTML = `
                     <div class="container">
-                        <h1 class="title">🔒 HTTPS Required</h1>
-                        <div class="info-message">
-                            <strong>Voice recognition requires HTTPS or localhost.</strong><br>
-                            Please access this page via HTTPS or run it locally.
-                        </div>
+                        <h1>🔒 HTTPS Required</h1>
+                        <p class="subtitle">Voice recognition requires HTTPS or localhost. Please access this page via HTTPS or run it locally.</p>
                     </div>
                 `;
                 return;

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 1. Vercel account (sign up at vercel.com)
-2. Anthropic API key (get from https://console.anthropic.com/)
+2. OpenAI API key (get from https://platform.openai.com/api-keys)
 3. Git repository with your code
 
 ## Deployment Steps
@@ -25,7 +25,7 @@ vercel
 ### 2. Set Environment Variables
 In Vercel Dashboard:
 1. Go to your project → Settings → Environment Variables
-2. Add: `ANTHROPIC_API_KEY` = `your_actual_api_key`
+2. Add: `OPENAI_API_KEY` = `your_actual_api_key`
 3. Add: `NEXT_PUBLIC_API_URL` = `https://your-app-name.vercel.app`
 
 ### 3. Update Plugin Configuration

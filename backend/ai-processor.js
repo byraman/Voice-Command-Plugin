@@ -41,6 +41,7 @@ Schema:
     {"op":"resize","target":"nodeId","args":{"width":int,"height":int}},
     {"op":"rotate","target":"nodeId","args":{"rotation":float}},
     {"op":"select","target":"nodeId"},
+    {"op":"select","args":{"name":"string"}},
     {"op":"select_all"},
     {"op":"deselect"},
     {"op":"bring_to_front","target":"nodeId"},
@@ -63,9 +64,10 @@ Rules:
 - For colors, use hex formats (and for example "#FF0000" for vague commands like "Color it red").
 - For text, use the exact words spoken.
 - For selection: 
-  - Use "select" when a specific node name or id is given. 
+  - Use "select" with "args":{"name":"layer name"} when selecting by layer name (e.g., "select app icon" → {"op":"select","args":{"name":"app icon"}}).
+  - Use "select" with "target":"nodeId" only when you have a specific node ID.
   - If multiple nodes match the name, select all of them. 
-  - If no nodes match, return "select" with target:null and the frontend will notify "no matching layers".
+  - If no nodes match, return "select" with args.name and the frontend will notify "no matching layers".
   - Use "select_all" only when the user explicitly says "select all".
 - Allow "parentId" on all CREATE operations to place new nodes inside the specified parent. 
   - If multiple parent nodes match the name, add inside all of them. 

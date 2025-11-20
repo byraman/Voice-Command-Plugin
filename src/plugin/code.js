@@ -278,58 +278,62 @@
         }
         break;
       // SELECTION
-      case "select":
+      case "select": {
         if (target) {
-          const node = findNodeById(target);
-          if (node) {
-            figma.currentPage.selection = [node];
-            figma.viewport.scrollAndZoomIntoView([node]);
-          } else {
-            figma.notify("No matching layers found with the specified name.");
-          }
-        } else {
-          const searchName2 = args.name || "";
-          const allNodes2 = figma.currentPage.findAll();
-          const matchingNodes2 = allNodes2.filter(
-            (node) => node.name && node.name.toLowerCase().includes(searchName2.toLowerCase())
-          );
-          if (matchingNodes2.length === 0) {
-            figma.notify("No matching layers found with the specified name.");
-          } else if (matchingNodes2.length > 1) {
-            figma.currentPage.selection = matchingNodes2;
-            figma.viewport.scrollAndZoomIntoView(matchingNodes2);
-            figma.notify(`Selected ${matchingNodes2.length} layers named '${searchName2}'.`);
-          } else {
-            figma.currentPage.selection = [matchingNodes2[0]];
-            figma.viewport.scrollAndZoomIntoView([matchingNodes2[0]]);
+          const nodeById = findNodeById(target);
+          if (nodeById) {
+            figma.currentPage.selection = [nodeById];
+            figma.viewport.scrollAndZoomIntoView([nodeById]);
+            break;
           }
         }
+        const selectSearchName = args.name || (target && typeof target === "string" ? target : "");
+        if (!selectSearchName) {
+          figma.notify("No layer name specified for selection.");
+          break;
+        }
+        const selectAllNodes = figma.currentPage.findAll();
+        const selectMatchingNodes = selectAllNodes.filter(
+          (node) => node.name && node.name.toLowerCase().includes(selectSearchName.toLowerCase())
+        );
+        if (selectMatchingNodes.length === 0) {
+          figma.notify(`No matching layers found with name "${selectSearchName}".`);
+        } else if (selectMatchingNodes.length > 1) {
+          figma.currentPage.selection = selectMatchingNodes;
+          figma.viewport.scrollAndZoomIntoView(selectMatchingNodes);
+          figma.notify(`Selected ${selectMatchingNodes.length} layers named '${selectSearchName}'.`);
+        } else {
+          figma.currentPage.selection = [selectMatchingNodes[0]];
+          figma.viewport.scrollAndZoomIntoView([selectMatchingNodes[0]]);
+        }
         break;
-      case "find_by_name":
-        const searchName = args.name || "";
-        const allNodes = figma.currentPage.findAll();
-        const matchingNodes = allNodes.filter(
-          (node) => node.name && node.name.toLowerCase().includes(searchName.toLowerCase())
+      }
+      case "find_by_name": {
+        const findSearchName = args.name || "";
+        const findAllNodes = figma.currentPage.findAll();
+        const findMatchingNodes = findAllNodes.filter(
+          (node) => node.name && node.name.toLowerCase().includes(findSearchName.toLowerCase())
         ).sort((a, b) => {
           const aName = a.name.toLowerCase();
           const bName = b.name.toLowerCase();
-          const search = searchName.toLowerCase();
+          const search = findSearchName.toLowerCase();
           if (aName === search) return -1;
           if (bName === search) return 1;
           if (aName.startsWith(search) && !bName.startsWith(search)) return -1;
           if (bName.startsWith(search) && !aName.startsWith(search)) return 1;
           return aName.length - bName.length;
         });
-        if (matchingNodes.length > 0) {
-          const selectedNode = matchingNodes[0];
+        if (findMatchingNodes.length > 0) {
+          const selectedNode = findMatchingNodes[0];
           figma.currentPage.selection = [selectedNode];
           figma.viewport.scrollAndZoomIntoView([selectedNode]);
           globalThis.lastSelectedNodeId = selectedNode.id;
           figma.notify(`Found and selected: ${selectedNode.name}`);
         } else {
-          figma.notify(`No objects found matching "${searchName}"`);
+          figma.notify(`No objects found matching "${findSearchName}"`);
         }
         break;
+      }
       case "select_last":
         const lastSelectedId = globalThis.lastSelectedNodeId;
         if (lastSelectedId) {

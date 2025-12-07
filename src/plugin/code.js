@@ -117,6 +117,8 @@
         if (args.borderRadius) rect.cornerRadius = args.borderRadius;
         if (args.name) rect.name = args.name;
         appendToParent(rect, args.parentId);
+        figma.currentPage.selection = [rect];
+        figma.viewport.scrollAndZoomIntoView([rect]);
         break;
       case "create_circle":
         const circle = figma.createEllipse();
@@ -127,6 +129,8 @@
         if (args.color) circle.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) circle.name = args.name;
         appendToParent(circle, args.parentId);
+        figma.currentPage.selection = [circle];
+        figma.viewport.scrollAndZoomIntoView([circle]);
         break;
       case "create_ellipse":
         const ellipse = figma.createEllipse();
@@ -136,6 +140,8 @@
         if (args.color) ellipse.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) ellipse.name = args.name;
         appendToParent(ellipse, args.parentId);
+        figma.currentPage.selection = [ellipse];
+        figma.viewport.scrollAndZoomIntoView([ellipse]);
         break;
       case "create_line":
         const line = figma.createLine();
@@ -146,6 +152,8 @@
         if (args.strokeWeight) line.strokeWeight = args.strokeWeight;
         if (args.name) line.name = args.name;
         appendToParent(line, args.parentId);
+        figma.currentPage.selection = [line];
+        figma.viewport.scrollAndZoomIntoView([line]);
         break;
       case "create_polygon":
         const polygon = figma.createPolygon();
@@ -155,6 +163,8 @@
         if (args.color) polygon.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) polygon.name = args.name;
         appendToParent(polygon, args.parentId);
+        figma.currentPage.selection = [polygon];
+        figma.viewport.scrollAndZoomIntoView([polygon]);
         break;
       case "create_star":
         const star = figma.createStar();
@@ -164,6 +174,8 @@
         if (args.color) star.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
         if (args.name) star.name = args.name;
         appendToParent(star, args.parentId);
+        figma.currentPage.selection = [star];
+        figma.viewport.scrollAndZoomIntoView([star]);
         break;
       // TEXT
       case "create_text":
@@ -177,6 +189,8 @@
           if (args.name) text.name = args.name;
           text.textAutoResize = "WIDTH_AND_HEIGHT";
           appendToParent(text, args.parentId);
+          figma.currentPage.selection = [text];
+          figma.viewport.scrollAndZoomIntoView([text]);
         }).catch((error) => {
           console.error("\u274C Font loading failed:", error);
           text.characters = args.text || "Hello";
@@ -184,6 +198,8 @@
           if (args.color) text.fills = [{ type: "SOLID", color: hexToRgb(args.color) }];
           if (args.name) text.name = args.name;
           appendToParent(text, args.parentId);
+          figma.currentPage.selection = [text];
+          figma.viewport.scrollAndZoomIntoView([text]);
         });
         break;
       // FRAMES
@@ -196,6 +212,8 @@
         if (args.borderRadius) frame.cornerRadius = args.borderRadius;
         if (args.name) frame.name = args.name;
         appendToParent(frame, args.parentId);
+        figma.currentPage.selection = [frame];
+        figma.viewport.scrollAndZoomIntoView([frame]);
         break;
       // STYLING
       case "set_fill":

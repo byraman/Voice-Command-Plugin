@@ -293,8 +293,12 @@
           break;
         }
         const selectAllNodes = figma.currentPage.findAll();
-        const selectMatchingNodes = selectAllNodes.filter(
-          (node) => node.name && node.name.toLowerCase().includes(selectSearchName.toLowerCase())
+        const searchLower = selectSearchName.toLowerCase();
+        const exactMatches = selectAllNodes.filter(
+          (node) => node.name && node.name.toLowerCase() === searchLower
+        );
+        const selectMatchingNodes = exactMatches.length > 0 ? exactMatches : selectAllNodes.filter(
+          (node) => node.name && node.name.toLowerCase().includes(searchLower)
         );
         if (selectMatchingNodes.length === 0) {
           figma.notify(`No matching layers found with name "${selectSearchName}".`);

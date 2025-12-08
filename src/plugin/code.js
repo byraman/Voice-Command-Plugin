@@ -465,14 +465,12 @@
     const parent = findParentNode(parentId);
     if (parent) {
       if (Array.isArray(parent)) {
-        parent.forEach((p) => {
-          if ("appendChild" in p) {
-            p.appendChild(node.clone());
-          } else {
-            figma.currentPage.appendChild(node.clone());
-          }
-        });
-        figma.notify(`Added element inside ${parent.length} parents named '${parentId}'.`);
+        const firstParent = parent[0];
+        if ("appendChild" in firstParent) {
+          firstParent.appendChild(node);
+        } else {
+          figma.currentPage.appendChild(node);
+        }
       } else {
         if ("appendChild" in parent) {
           parent.appendChild(node);

@@ -575,15 +575,13 @@ function appendToParent(node: any, parentId: string | undefined) {
   const parent = findParentNode(parentId);
   if (parent) {
     if (Array.isArray(parent)) {
-      // Multiple parents with same name
-      parent.forEach(p => {
-        if ('appendChild' in p) {
-          p.appendChild(node.clone());
-        } else {
-          figma.currentPage.appendChild(node.clone());
-        }
-      });
-      figma.notify(`Added element inside ${parent.length} parents named '${parentId}'.`);
+      // Multiple parents with same name - use first match only
+      const firstParent = parent[0];
+      if ('appendChild' in firstParent) {
+        firstParent.appendChild(node);
+      } else {
+        figma.currentPage.appendChild(node);
+      }
     } else {
       // Single parent
       if ('appendChild' in parent) {

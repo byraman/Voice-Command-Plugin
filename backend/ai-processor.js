@@ -70,7 +70,7 @@ Rules:
   - If no nodes match, return "select" with args.name and the frontend will notify "no matching layers".
   - Use "select_all" only when the user explicitly says "select all".
 - Allow "parentId" on all CREATE operations to place new nodes inside the specified parent. 
-  - If multiple parent nodes match the name, add inside all of them. 
+  - If multiple parent nodes match the name, add inside the most matching name. 
   - If no parent matches, create at the root.
 
 

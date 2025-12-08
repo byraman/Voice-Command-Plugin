@@ -1,5 +1,5 @@
 // code.ts - Main Figma plugin logic
-figma.showUI(__html__, { width: 400, height: 400 });
+figma.showUI(__html__, { width: 400, height: 450 });
 console.log('Voice Commands Plugin loaded');
 
 // Auto-detect API URL: try localhost first, fallback to Vercel

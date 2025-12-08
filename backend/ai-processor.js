@@ -4,7 +4,6 @@ const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 console.log('API Key loaded:', process.env.OPENAI_API_KEY ? 'Yes' : 'No');
-console.log('API Key starts with:', process.env.OPENAI_API_KEY ? process.env.OPENAI_API_KEY.substring(0, 10) + '...' : 'undefined');
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 

@@ -1,7 +1,7 @@
 "use strict";
 (() => {
   // src/plugin/code.ts
-  figma.showUI(__html__, { width: 400, height: 400 });
+  figma.showUI(__html__, { width: 400, height: 450 });
   console.log("Voice Commands Plugin loaded");
   async function detectApiUrl() {
     try {
